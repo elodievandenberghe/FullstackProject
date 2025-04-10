@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace BookingSite.Domains.EntitiesDB;
+namespace BookingSite.Domains.Models;
 
 public partial class Airport
 {
