@@ -1,0 +1,12 @@
+﻿services:
+  bookingsite:
+    image: bookingsite
+    build:
+      context: .
+      dockerfile: BookingSite/Dockerfile
+
+  bookingsite.domains:
+    image: bookingsite.domains
+    build:
+      context: .
+      dockerfile: BookingSite.Domains/Dockerfile

@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+
+    <ItemGroup>
+        <SupportedPlatform Include="browser"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.14"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="wwwroot\background.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\exampleJsInterop.js" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\BookingSite.Domains\BookingSite.Domains.csproj" />
+      <ProjectReference Include="..\BookingSite.Repositories\BookingSite.Repositories.csproj" />
+    </ItemGroup>
+
+</Project>
