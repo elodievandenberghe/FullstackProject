@@ -1,7 +1,6 @@
 using BookingSite.Domains.Context;
 using BookingSite.Domains.Models;
 using BookingSite.Repositories.Interfaces;
-using BookingSite.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookingSite.Repositories;
@@ -56,7 +55,7 @@ public class BookingsDAO : IDAO<Booking, int>
         }
     }
 
-    public async Task<IEnumerable<Booking>> GetAllAsync()
+    public async Task<IEnumerable<Booking>?> GetAllAsync()
     {
         try
         {

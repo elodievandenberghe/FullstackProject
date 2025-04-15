@@ -4,11 +4,11 @@ using BookingSite.Services.Interfaces;
 
 namespace BookingSite.Services;
 
-public class RouteService : IService<Route, int>
+public class RouteService : IRouteService
 {
-    private IDAO<Route, int> _routeDAO;
+    private IRouteDAO _routeDAO;
 
-    public RouteService(IDAO<Route, int> routeDao) 
+    public RouteService(IRouteDAO routeDao) 
     {
         _routeDAO = routeDao;
     }
@@ -23,7 +23,7 @@ public class RouteService : IService<Route, int>
         await _routeDAO.DeleteAsync(entity);
     }
 
-    public async Task<Route> FindByIdAsync(int Id)
+    public async Task<Route?> FindByIdAsync(int Id)
     {
         return await _routeDAO.FindByIdAsync(Id);
     }
@@ -36,5 +36,10 @@ public class RouteService : IService<Route, int>
     public async Task UpdateAsync(Route entity)
     {
         await _routeDAO.UpdateAsync(entity);
+    }
+
+    public async Task<IEnumerable<Route>?> GetByFromAirportIdToAirportId(int fromAirportId, int toAirportId)
+    {
+        return await _routeDAO.GetByFromAirportIdToAirportId(fromAirportId, toAirportId); 
     }
 }

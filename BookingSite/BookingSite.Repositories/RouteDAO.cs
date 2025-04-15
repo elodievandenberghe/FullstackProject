@@ -1,12 +1,11 @@
 using BookingSite.Domains.Context;
 using BookingSite.Domains.Models;
 using BookingSite.Repositories.Interfaces;
-using BookingSite.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookingSite.Repositories;
 
-public class RouteDAO : IDAO<Route, int>
+public class RouteDAO : IRouteDAO
 {
     private readonly Context _dbContext;
 
@@ -56,13 +55,13 @@ public class RouteDAO : IDAO<Route, int>
         }
     }
 
-    public async Task<IEnumerable<Route>> GetAllAsync()
+    public async Task<IEnumerable<Route>?> GetAllAsync()
     {
         try
         {
             return await _dbContext.Routes
-                .Include(b => b.FromAirport)
-                .Include(b => b.ToAirport)
+                .Include(a => a.FromAirport)
+                .Include(a => a.ToAirport)
                 .ToListAsync();
         }
         catch (Exception ex)
@@ -84,5 +83,13 @@ public class RouteDAO : IDAO<Route, int>
             Console.WriteLine($"Error in UpdateAsync: {ex.Message}");
             throw;
         }
+    }
+
+    public async Task<IEnumerable<Route>?> GetByFromAirportIdToAirportId(int fromAirportId, int toAirportId)
+    {
+        return await _dbContext.Routes.Where(a => a.FromAirportId == fromAirportId && a.ToAirportId == toAirportId)
+            .Include(a => a.FromAirport)
+            .Include(a => a.ToAirport)
+            .ToListAsync();
     }
 }

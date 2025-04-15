@@ -55,7 +55,7 @@ public class AspNetUserDao : IDAO<AspNetUser, string>
         }
     }
 
-    public async Task<IEnumerable<AspNetUser>> GetAllAsync()
+    public async Task<IEnumerable<AspNetUser>?> GetAllAsync()
     {
         try
         {

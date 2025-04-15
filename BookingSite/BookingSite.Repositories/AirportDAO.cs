@@ -56,7 +56,7 @@ public class AirportDAO : IDAO<Airport, int>
         }
     }
 
-    public async Task<IEnumerable<Airport>> GetAllAsync()
+    public async Task<IEnumerable<Airport>?> GetAllAsync()
     {
         try
         {
