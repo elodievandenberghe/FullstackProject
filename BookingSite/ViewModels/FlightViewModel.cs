@@ -7,6 +7,7 @@ public class FlightViewModel
     public DateOnly? Date { get; set; }
     public string? FromAirport { get; set; }
     public string? ToAirport { get; set; }
+    public int ToAirportId { get; set; }
 
     public string? RouteSegments { get; set; }
 }

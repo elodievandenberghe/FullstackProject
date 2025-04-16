@@ -36,9 +36,17 @@ builder.Services.AddTransient<IService<Airport, int>, AirportService>();
 builder.Services.AddTransient<IRouteDAO, RouteDAO>();
 builder.Services.AddTransient<IRouteService, RouteService>();
 
+builder.Services.AddTransient<IMealChoiceDAO, MealChoicesDAO>();
+builder.Services.AddTransient<IMealChoiceService, MealchoicesService>();
+
 builder.Services.AddTransient<IDAO<Flight, int>, FlightDAO>();
 builder.Services.AddTransient<IService<Flight, int>, FlightService>();
 
+builder.Services.AddTransient<IDAO<Flight, int>, FlightDAO>();
+builder.Services.AddTransient<IService<Flight, int>, FlightService>();
+
+builder.Services.AddTransient<IDAO<TravelClass, int>, TravelClassesDAO>();
+builder.Services.AddTransient<IService<TravelClass, int>, TravelClassesService>();
 
 builder.Services.AddTransient<IEmailSender, EmailSender>();
  

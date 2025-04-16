@@ -26,6 +26,8 @@ public class AutoMapperProfile : Profile
                         src => src.Route.FromAirport.Name))
                 .ForMember(dest => dest.ToAirport, opt => opt.MapFrom(
                     src => src.Route.ToAirport.Name))
+                .ForMember(dest => dest.ToAirportId, opt => opt.MapFrom(
+                    src => src.Route.ToAirport.Id))
                 .ForMember(dest => dest.RouteSegments, opt => opt.MapFrom(
                     src => string.Join(" -> ", src.Route.RouteSegments.Select(r => r.Airport.Name))));
 

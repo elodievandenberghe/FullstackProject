@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookingSite.Repositories;
 
-public class MealChoicesDAO : IDAO<MealChoice, int>
+public class MealChoicesDAO : IMealChoiceDAO
 {
     private readonly Context _dbContext;
 
@@ -69,6 +69,16 @@ public class MealChoicesDAO : IDAO<MealChoice, int>
             throw;
         }
     }
+
+    public async Task<IEnumerable<MealChoice>?> GetByAirportId(int airportId)
+    {
+        return await _dbContext.MealChoices
+            .Where(m => m.AirportId == null || m.AirportId == airportId)
+            .Include(m => m.Airport)
+            .ToListAsync();
+       throw new NotImplementedException();
+    }
+
 
     public async Task UpdateAsync(MealChoice entity)
     {

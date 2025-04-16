@@ -1,9 +1,22 @@
-@model BookingSite.ViewModels.FlightViewModel
+@model BookingSite.ViewModels.TicketOverviewViewModel
 
 <div>
-    <p>From: @Model.FromAirport</p> 
-    <p>To: @Model.ToAirport</p>
-    <p>Transfers: @Model.RouteSegments</p>
-    <p>Mealchoice: </p>
+    <p>From: <br/>
+        @Model.FromAirport</p> 
+    <p>To: <br/>
+        @Model.ToAirport</p>
+    <p>Transfers: <br/>
+        @Model.RouteSegments</p>
+    <p>Mealchoice:</p>
+    <select asp-for="SelectedMeal" asp-items="@Model.Meals">
+    </select>
     <p>Travel class: </p>
+    <select asp-for="SelectedClass" asp-items="@Model.Classes">>
+    </select>
+</div>
+
+<div>
+    <button asp-action="ShoppingCart">
+        Add to shopping cart
+    </button>
 </div>

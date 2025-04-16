@@ -1,14 +1,15 @@
 using BookingSite.Domains.Models;
+using BookingSite.Repositories;
 using BookingSite.Repositories.Interfaces;
 using BookingSite.Services.Interfaces;
 
 namespace BookingSite.Services;
 
-public class MealchoicesService : IService<MealChoice, int>
+public class MealchoicesService : IMealChoiceService
 {
-    private IDAO<MealChoice, int> _mealChoiceDAO;
+    private IMealChoiceDAO _mealChoiceDAO;
 
-    public MealchoicesService(IDAO<MealChoice, int> mealchoiceDAO) 
+    public MealchoicesService(IMealChoiceDAO mealchoiceDAO) 
     {
         _mealChoiceDAO = mealchoiceDAO;
     }
@@ -36,5 +37,10 @@ public class MealchoicesService : IService<MealChoice, int>
     public async Task UpdateAsync(MealChoice entity)
     {
         await _mealChoiceDAO.UpdateAsync(entity);
+    }
+
+    public async Task<IEnumerable<MealChoice>?> GetByAirportId(int airportId)
+    {
+       return  await _mealChoiceDAO.GetByAirportId(airportId);
     }
 }
