@@ -49,11 +49,7 @@ public partial class Context : DbContext
     public virtual DbSet<Ticket> Tickets { get; set; }
 
     public virtual DbSet<TravelClass> TravelClasses { get; set; }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=127.0.0.1;Database=BookingsDB;TrustServerCertificate=True;MultipleActiveResultSets=True;User=SA;Password=Rootpassword123_123");
-
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Airport>(entity =>
