@@ -1,6 +1,6 @@
 namespace BookingSite.Controllers;
 
-public class ShoppingCartController
+public class CartController
 {
     
 }

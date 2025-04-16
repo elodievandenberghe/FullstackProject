@@ -12,5 +12,6 @@ public class TicketOverviewViewModel
     public string? SelectedMeal { get; set; }
     public IEnumerable<SelectListItem>? Classes { get; set; } 
     public string? SelectedClass { get; set; }
+    public double Price { get; set; }
 
 }

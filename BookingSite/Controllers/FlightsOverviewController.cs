@@ -54,6 +54,7 @@ public class FlightsOverviewController : Controller
             RouteSegments = flightViewModel.RouteSegments,
             Meals = new SelectList(lstMealChoices, "Id", "Description"), 
             Classes = new SelectList(lstClasses, "Id", "Type"), 
+            Price =flightViewModel.Price
         };
         
         return View(ticketOverviewVmViewModel); 

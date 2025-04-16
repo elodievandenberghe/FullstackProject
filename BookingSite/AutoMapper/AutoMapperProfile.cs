@@ -23,13 +23,16 @@ public class AutoMapperProfile : Profile
             // Flight -> FlightViewModel
             CreateMap<Flight, FlightViewModel>()
                 .ForMember(dest => dest.FromAirport, opt => opt.MapFrom(
-                        src => src.Route.FromAirport.Name))
+                    src => src.Route.FromAirport.Name))
                 .ForMember(dest => dest.ToAirport, opt => opt.MapFrom(
                     src => src.Route.ToAirport.Name))
                 .ForMember(dest => dest.ToAirportId, opt => opt.MapFrom(
                     src => src.Route.ToAirport.Id))
                 .ForMember(dest => dest.RouteSegments, opt => opt.MapFrom(
-                    src => string.Join(" -> ", src.Route.RouteSegments.Select(r => r.Airport.Name))));
+                    src => string.Join(" -> ", src.Route.RouteSegments.Select(r => r.Airport.Name))))
+                .ForMember(dest => dest.Price, opt => opt.MapFrom(
+                    src => src.Route.Price));
+            
 
 
             // MealChoice -> MealChoiceViewModelJ

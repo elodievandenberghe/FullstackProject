@@ -24,6 +24,9 @@
             <th>
                 Date
             </th>
+            <th>
+                Price
+            </th>
             <th></th>
         </tr>
         </thead>
@@ -43,7 +46,9 @@
                 <td>
                     @Html.DisplayFor(modelItem => item.Date)
                 </td>
-            
+                <td>
+                  € @Html.DisplayFor(modelItem => item.Price)
+                </td>
                 <td>
                     @Html.ActionLink("Buy your ticket", "Buy", item) 
                 </td>
