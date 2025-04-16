@@ -1,0 +1,56 @@
+@model IEnumerable<BookingSite.ViewModels.FlightViewModel>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+
+<h1>Index</h1>
+
+@if (Model != null)
+{
+    <table class="table" id="myTable">
+        <thead>
+        <tr>
+            <th>
+                From 
+            </th>
+            <th>
+                To
+            </th>
+            <th>
+                Transfers
+            </th>
+            <th>
+                Date
+            </th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.FromAirport)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ToAirport)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.RouteSegments)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Date)
+                </td>
+            
+                <td>
+                    @Html.ActionLink("Buy your ticket", "Buy", item) 
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}else{
+    <p>no Data</p>
+}

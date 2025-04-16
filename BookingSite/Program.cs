@@ -36,6 +36,10 @@ builder.Services.AddTransient<IService<Airport, int>, AirportService>();
 builder.Services.AddTransient<IRouteDAO, RouteDAO>();
 builder.Services.AddTransient<IRouteService, RouteService>();
 
+builder.Services.AddTransient<IDAO<Flight, int>, FlightDAO>();
+builder.Services.AddTransient<IService<Flight, int>, FlightService>();
+
+
 builder.Services.AddTransient<IEmailSender, EmailSender>();
  
 
@@ -96,7 +100,7 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=FlightsOverview}/{action=Index}/{id?}");
 app.MapRazorPages();
 
 app.Run();

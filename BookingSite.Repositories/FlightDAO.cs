@@ -60,8 +60,12 @@ public class FlightDAO : IDAO<Flight, int>
         try
         {
             return await _dbContext.Flights
-                .Include(b => b.Route)
+                .Include(f => f.Route.ToAirport)
+                .Include(f => f.Route.FromAirport)
+                .Include(f => f.Route.RouteSegments)
+                .ThenInclude(rs => rs.Airport)
                 .ToListAsync();
+
         }
         catch (Exception ex)
         {

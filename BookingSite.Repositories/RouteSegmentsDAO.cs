@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookingSite.Repositories;
 
-public class RouteSegmentsDAO : IDAO<RouteSegment, int>
+public class RouteSegmentsDAO : IRouteSegments
 {
     private readonly Context _dbContext;
 
@@ -83,5 +83,15 @@ public class RouteSegmentsDAO : IDAO<RouteSegment, int>
             Console.WriteLine($"Error in UpdateAsync: {ex.Message}");
             throw;
         }
+    }
+
+    public async Task<IEnumerable<RouteSegment>?> GetByRouteId(int routeId)
+    {
+        return await _dbContext.RouteSegments
+            .Where(a => a.RouteId == routeId)
+            .Include(b => b.Route)
+            .Include(b => b.Airport)
+            .ToListAsync();
+        
     }
 }
