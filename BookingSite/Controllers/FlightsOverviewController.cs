@@ -5,6 +5,7 @@ using BookingSite.Services.Interfaces;
 using BookingSite.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using BookingSite.Extension;
 
 namespace BookingSite.Controllers;
 
@@ -59,9 +60,23 @@ public class FlightsOverviewController : Controller
         
         return View(ticketOverviewVmViewModel); 
     }
-
-    public IActionResult ShoppingCart()
+    [HttpPost]
+    public IActionResult AddToShoppingCart(TicketOverviewViewModel ticketOverview)
     {
-        return View();
+        var item = new CartItemViewModel()
+        {
+            Date = ticketOverview.Date,
+            FromAirport = ticketOverview.FromAirport,
+            ToAirport = ticketOverview.ToAirport,
+            RouteSegments = ticketOverview.RouteSegments,
+            MealDescription = ticketOverview.SelectedMeal,
+            ClassType = ticketOverview.SelectedClass,
+            Price = ticketOverview.Price
+        };
+        var shopping = HttpContext.Session.GetObject<CartViewModel>("ShoppingCart" ) ?? new CartViewModel() { Carts = new List<CartItemViewModel>() };
+        shopping.Carts.Add(item);
+        HttpContext.Session.SetObject("ShoppingCart", shopping);
+        
+        return RedirectToAction("Index", "Cart");
     }
 }

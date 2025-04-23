@@ -76,6 +76,13 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+builder.Services.AddSession(options =>
+{
+
+    options.Cookie.Name = "be.VIVES.Session";
+
+    options.IdleTimeout = TimeSpan.FromDays(1);
+});
 
 var app = builder.Build();
 
@@ -101,7 +108,7 @@ app.UseSwaggerUI(option =>
 app.UseSwagger();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
+app.UseSession();
 app.UseRouting();
 
 app.UseAuthorization();
