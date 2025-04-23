@@ -7,26 +7,29 @@
         @Model.ToAirport</p>
     <p>Transfers: <br/>
         @Model.RouteSegments</p>
+    <p>Date: <br/>
+        @Model.Date</p>
     <p>Price: <br/>
-       € @Model.Price</p>
+        € @Model.Price</p>
+    <p>Additional fees: </p>
     <p>Mealchoice:</p>
-    <select asp-for="SelectedMeal" asp-items="@Model.Meals">
-    </select>
-    <p>Travel class: </p>
-    <select asp-for="SelectedClass" asp-items="@Model.Classes">>
-    </select>
 </div>
 
 <div>
     <!--Om de shopping cart te laten werken met een button, moeten we dit doen om een form aan te maken en dit te posten-->
     <form asp-action="AddToShoppingCart" method="post">
-        <input type="hidden" name="Date" value="@Model.Date"/>
-        <input type="hidden" name="FromAirport" value="@Model.FromAirport"/>
-        <input type="hidden" name="ToAirport" value="@Model.ToAirport"/>
-        <input type="hidden" name="RouteSegments" value="@Model.RouteSegments"/>
-        <input type="hidden" name="SelectedMeal" value="@Model.SelectedMeal"/>
-        <input type="hidden" name="SelectedClass" value="@Model.SelectedClass"/>
-        <input type="hidden" name="Price" value="@Model.Price"/>
+        <input type="hidden" name="Date" value="@Model.Date" />
+        <input type="hidden" name="FromAirport" value="@Model.FromAirport" />
+        <input type="hidden" name="ToAirport" value="@Model.ToAirport" />
+        <input type="hidden" name="RouteSegments" value="@Model.RouteSegments" />
+        <input type="hidden" name="Price" value="@Model.Price" />
+
+        <p>Mealchoice:</p>
+        <select asp-for="SelectedMeal" asp-items="@Model.Meals"></select>
+
+        <p>Travel class: </p>
+        <select asp-for="SelectedClass" asp-items="@Model.Classes"></select>
+        <br/>
         <button type="submit">Add to shopping cart</button>
     </form>
 

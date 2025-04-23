@@ -27,7 +27,12 @@
             <th>
                 Price
             </th>
-            <th></th>
+            <th>
+                Class
+            </th>
+            <th>
+                Meal
+            </th>
         </tr>
         </thead>
         <tbody>
@@ -50,12 +55,21 @@
                     € @Html.DisplayFor(modelItem => item.Price)
                 </td>
                 <td>
-                    @Html.ActionLink("Buy your ticket", "Buy", item) 
+                    @Html.DisplayFor(modelItem => item.ClassType)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.MealDescription)
                 </td>
             </tr>
         }
         </tbody>
     </table>
+    
+    <div>
+        <p>Totaal: <br/> </p>
+        <p>@Model.ComputeTotalValue()</p>
+        @Html.ActionLink("Proceed to checkout", "Buy", Model)
+    </div>
 }else{
     <p>no Data</p>
 }

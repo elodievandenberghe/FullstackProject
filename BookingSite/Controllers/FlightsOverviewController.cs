@@ -53,6 +53,7 @@ public class FlightsOverviewController : Controller
             FromAirport = flightViewModel.FromAirport,
             ToAirport = flightViewModel.ToAirport,
             RouteSegments = flightViewModel.RouteSegments,
+            Date = flightViewModel.Date,
             Meals = new SelectList(lstMealChoices, "Id", "Description"), 
             Classes = new SelectList(lstClasses, "Id", "Type"), 
             Price =flightViewModel.Price
@@ -69,8 +70,8 @@ public class FlightsOverviewController : Controller
             FromAirport = ticketOverview.FromAirport,
             ToAirport = ticketOverview.ToAirport,
             RouteSegments = ticketOverview.RouteSegments,
-            MealDescription = ticketOverview.SelectedMeal,
-            ClassType = ticketOverview.SelectedClass,
+            MealId = Convert.ToInt32(ticketOverview.SelectedMeal),
+            ClassId = Convert.ToInt32(ticketOverview.SelectedClass),
             Price = ticketOverview.Price
         };
         var shopping = HttpContext.Session.GetObject<CartViewModel>("ShoppingCart" ) ?? new CartViewModel() { Carts = new List<CartItemViewModel>() };
