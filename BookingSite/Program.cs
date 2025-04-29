@@ -48,6 +48,12 @@ builder.Services.AddTransient<IService<Flight, int>, FlightService>();
 builder.Services.AddTransient<IDAO<TravelClass, int>, TravelClassesDAO>();
 builder.Services.AddTransient<IService<TravelClass, int>, TravelClassesService>();
 
+builder.Services.AddTransient<ITicketDAO, TicketDAO>();
+builder.Services.AddTransient<ITicketService, TicketService>();
+
+builder.Services.AddTransient<ISeatDAO, SeatDAO>();
+builder.Services.AddTransient<ISeatService, SeatService>();
+
 builder.Services.AddTransient<IEmailSender, EmailSender>();
  
 

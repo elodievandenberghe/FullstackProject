@@ -2,6 +2,7 @@ namespace BookingSite.ViewModels;
 
 public class CartItemViewModel
 {
+    public int FlightId { get; set; }
     public DateOnly? Date { get; set; }
     public string? FromAirport { get; set; }
     public string? ToAirport { get; set; }

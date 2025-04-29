@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookingSite.Repositories;
 
-public class TicketDAO : IDAO<Ticket, int>
+public class TicketDAO : ITicketDAO
 {
     private readonly Context _dbContext;
 
@@ -84,5 +84,18 @@ public class TicketDAO : IDAO<Ticket, int>
             Console.WriteLine($"Error in UpdateAsync: {ex.Message}");
             throw;
         }
+    }
+
+    public async Task<Ticket>? GetBySeatId(int id)
+    {
+        try
+        {
+            return await _dbContext.Tickets.Where(t => t.SeatId == id).FirstAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in UpdateAsync: {ex.Message}");
+            throw;
+        }    
     }
 }

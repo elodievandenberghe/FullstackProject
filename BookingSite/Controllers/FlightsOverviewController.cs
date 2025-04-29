@@ -50,6 +50,7 @@ public class FlightsOverviewController : Controller
         var lstClasses = _mapper.Map<List<TravelClassViewModel>>(await _travelClassService.GetAllAsync());
         var ticketOverviewVmViewModel = new TicketOverviewViewModel()
         {
+            FlightId = flightViewModel.Id,
             FromAirport = flightViewModel.FromAirport,
             ToAirport = flightViewModel.ToAirport,
             RouteSegments = flightViewModel.RouteSegments,
@@ -66,6 +67,7 @@ public class FlightsOverviewController : Controller
     {
         var item = new CartItemViewModel()
         {
+            FlightId = ticketOverview.FlightId,
             Date = ticketOverview.Date,
             FromAirport = ticketOverview.FromAirport,
             ToAirport = ticketOverview.ToAirport,

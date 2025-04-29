@@ -15,7 +15,6 @@ public class AutoMapperProfile : Profile
                            opt => opt.MapFrom(src => src.City != null ? src.City.Name : null));
         
             // Booking -> BookingViewModel
-            CreateMap<Booking, BookingViewModel>();
 
             // City -> CityViewModel
             CreateMap<City, CityViewModel>();

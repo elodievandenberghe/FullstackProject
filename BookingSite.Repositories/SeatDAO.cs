@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookingSite.Repositories;
 
-public class SeatDAO : IDAO<Seat, int>
+public class SeatDAO : ISeatDAO
 {
     private readonly Context _dbContext;
 
@@ -76,6 +76,21 @@ public class SeatDAO : IDAO<Seat, int>
         {
             _dbContext.Seats.Update(entity);
             await _dbContext.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in UpdateAsync: {ex.Message}");
+            throw;
+        }
+    }
+
+    public async Task<IEnumerable<Seat>?> GetByClassId(int id)
+    {
+        try
+        {
+            return await _dbContext.Seats.Where(s => s.TravelClassId == id)
+                .Include(s => s.TravelClass)
+                .ToListAsync();
         }
         catch (Exception ex)
         {

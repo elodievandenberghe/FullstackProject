@@ -4,11 +4,11 @@ using BookingSite.Services.Interfaces;
 
 namespace BookingSite.Services;
 
-public class TicketService : IService<Ticket, int>
+public class TicketService : ITicketService
 {
-    private IDAO<Ticket, int> _ticketDAO;
+    private ITicketDAO _ticketDAO;
 
-    public TicketService(IDAO<Ticket, int> ticketDAO) 
+    public TicketService(ITicketDAO ticketDAO) 
     {
         _ticketDAO = ticketDAO;
     }
@@ -36,5 +36,10 @@ public class TicketService : IService<Ticket, int>
     public async Task UpdateAsync(Ticket entity)
     {
         await _ticketDAO.UpdateAsync(entity);
+    }
+
+    public async Task<Ticket?> GetBySeatId(int id)
+    {
+        return await _ticketDAO.GetBySeatId(id); 
     }
 }

@@ -30,8 +30,6 @@ public partial class Context : DbContext
 
     public virtual DbSet<AspNetUserToken> AspNetUserTokens { get; set; }
 
-    public virtual DbSet<Booking> Bookings { get; set; }
-
     public virtual DbSet<City> Cities { get; set; }
 
     public virtual DbSet<Flight> Flights { get; set; }
@@ -49,7 +47,11 @@ public partial class Context : DbContext
     public virtual DbSet<Ticket> Tickets { get; set; }
 
     public virtual DbSet<TravelClass> TravelClasses { get; set; }
-    
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=127.0.0.1;Database=BookingsDB;TrustServerCertificate=True;MultipleActiveResultSets=True;User=SA;Password=Rootpassword123_123");
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Airport>(entity =>
@@ -135,23 +137,6 @@ public partial class Context : DbContext
             entity.Property(e => e.Name).HasMaxLength(128);
 
             entity.HasOne(d => d.User).WithMany(p => p.AspNetUserTokens).HasForeignKey(d => d.UserId);
-        });
-
-        modelBuilder.Entity<Booking>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("Bookings_PK");
-
-            entity.Property(e => e.UserId).HasMaxLength(450);
-
-            entity.HasOne(d => d.Ticket).WithMany(p => p.Bookings)
-                .HasForeignKey(d => d.TicketId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("Bookings_Tickets_FK");
-
-            entity.HasOne(d => d.User).WithMany(p => p.Bookings)
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("Bookings_AspNetUsers_FK");
         });
 
         modelBuilder.Entity<City>(entity =>
@@ -240,6 +225,8 @@ public partial class Context : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__Tickets__3214EC0705CCB4DD");
 
+            entity.Property(e => e.UserId).HasMaxLength(450);
+
             entity.HasOne(d => d.Flight).WithMany(p => p.Tickets)
                 .HasForeignKey(d => d.FlightId)
                 .HasConstraintName("FK__Tickets__FlightI__41EDCAC5");
@@ -251,6 +238,10 @@ public partial class Context : DbContext
             entity.HasOne(d => d.Seat).WithMany(p => p.Tickets)
                 .HasForeignKey(d => d.SeatId)
                 .HasConstraintName("FK__Tickets__SeatId__43D61337");
+
+            entity.HasOne(d => d.User).WithMany(p => p.Tickets)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("Tickets_AspNetUsers_FK");
         });
 
         modelBuilder.Entity<TravelClass>(entity =>

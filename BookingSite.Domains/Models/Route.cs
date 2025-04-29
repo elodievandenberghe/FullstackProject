@@ -15,9 +15,9 @@ public partial class Route
 
     public virtual ICollection<Flight> Flights { get; set; } = new List<Flight>();
 
-    public virtual Airport FromAirport { get; set; } = null!;
+    public virtual Airport? FromAirport { get; set; }
 
     public virtual ICollection<RouteSegment> RouteSegments { get; set; } = new List<RouteSegment>();
 
-    public virtual Airport ToAirport { get; set; } = null!;
+    public virtual Airport? ToAirport { get; set; }
 }

@@ -15,11 +15,13 @@ public partial class Ticket
 
     public bool? IsCancelled { get; set; }
 
-    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+    public string UserId { get; set; } = null!;
 
     public virtual Flight? Flight { get; set; }
 
     public virtual MealChoice? Meal { get; set; }
 
     public virtual Seat? Seat { get; set; }
+
+    public virtual AspNetUser User { get; set; } = null!;
 }

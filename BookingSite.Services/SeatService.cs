@@ -4,11 +4,11 @@ using BookingSite.Services.Interfaces;
 
 namespace BookingSite.Services;
 
-public class SeatService : IService<Seat, int>
+public class SeatService : ISeatService
 {
-    private IDAO<Seat, int> _seatDAO;
+    private ISeatDAO _seatDAO;
 
-    public SeatService(IDAO<Seat, int> seatDao) 
+    public SeatService(ISeatDAO seatDao) 
     {
         _seatDAO = seatDao;
     }
@@ -36,5 +36,10 @@ public class SeatService : IService<Seat, int>
     public async Task UpdateAsync(Seat entity)
     {
         await _seatDAO.UpdateAsync(entity);
+    }
+
+    public async Task<IEnumerable<Seat>?> GetByClassId(int id)
+    {
+        return await _seatDAO.GetByClassId(id);
     }
 }
