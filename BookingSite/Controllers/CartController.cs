@@ -9,6 +9,8 @@ using BookingSite.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using BookingSite.Utils;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace BookingSite.Controllers;
@@ -19,12 +21,13 @@ public class CartController : Controller
     private IService<TravelClass, int> _travelClassService;
     private ITicketService _ticketService;
     private ISeatService _seatService;
+    private IEmailSender _emailSender; 
     private readonly UserManager<ApplicationUser> _userManager;
 
     private readonly IMapper _mapper;
 
     public CartController(IMapper mapper, IMealChoiceService mealService, IService<TravelClass, int> travelServiceService, ITicketService ticketService
-        , UserManager<ApplicationUser> userManager, ISeatService seatService)
+        , UserManager<ApplicationUser> userManager, ISeatService seatService, IEmailSender eaEmailSender)
     {
         _mapper = mapper;
         _mealService = mealService;
@@ -32,6 +35,7 @@ public class CartController : Controller
         _ticketService = ticketService;
         _userManager = userManager;
         _seatService = seatService;
+        _emailSender = eaEmailSender;
     }
 
     [Authorize]
@@ -62,7 +66,8 @@ public class CartController : Controller
                 MealId = item.MealId,
                 SeatId = seat.Id,
             };
-            await _ticketService.AddAsync(ticket); 
+            await _ticketService.AddAsync(ticket);
+            _emailSender.SendEmailAsync(User.FindFirstValue(ClaimTypes.Email), "Your purchase has been completed!", "Thank you for buying a ticket :3");
         }
         return View();
     }
