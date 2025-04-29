@@ -8,6 +8,7 @@ using BookingSite.Repositories.Interfaces;
 using BookingSite.Services;
 using BookingSite.Services.Interfaces;
 using BookingSite.Utils;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.OpenApi.Models;
 
@@ -84,11 +85,15 @@ builder.Services.AddSwaggerGen(c =>
 });
 builder.Services.AddSession(options =>
 {
-
     options.Cookie.Name = "be.VIVES.Session";
-
     options.IdleTimeout = TimeSpan.FromDays(1);
 });
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)  
+    .AddCookie(options =>  
+    {  
+        options.LoginPath = "/Identity/Account/Register";  
+    });  
 
 var app = builder.Build();
 

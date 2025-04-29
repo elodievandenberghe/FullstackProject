@@ -6,6 +6,7 @@ using BookingSite.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using BookingSite.Extension;
+using Microsoft.AspNetCore.Authorization;
 
 namespace BookingSite.Controllers;
 
@@ -26,6 +27,7 @@ public class FlightsOverviewController : Controller
         _travelClassService = travelServiceService; 
     }
 
+    [Authorize]
     public async Task<IActionResult> Index()
     {
         try
@@ -44,6 +46,7 @@ public class FlightsOverviewController : Controller
         return View(); 
     }
 
+    [Authorize]
     public async Task<IActionResult> Buy(FlightViewModel flightViewModel)
     {
         var lstMealChoices = _mapper.Map<List<MealChoiceViewModel>>(await _mealService.GetByAirportId(flightViewModel.ToAirportId));

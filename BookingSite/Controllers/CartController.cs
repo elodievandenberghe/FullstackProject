@@ -6,6 +6,7 @@ using BookingSite.Extension;
 using BookingSite.Services;
 using BookingSite.Services.Interfaces;
 using BookingSite.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -33,16 +34,19 @@ public class CartController : Controller
         _seatService = seatService;
     }
 
+    [Authorize]
     public async Task<IActionResult> Index()
     {
         return View(await GetList());
     }
 
+    [Authorize]
     public async Task<IActionResult> Checkout()
     {
         return View(await GetList());
     }
 
+    [Authorize]
     public async Task<IActionResult> PurchaseComplete()
     {
         CartViewModel cartlist = await GetList();
@@ -62,6 +66,7 @@ public class CartController : Controller
         return View();
     }
 
+    
     public async Task<CartViewModel> GetList()
     {
         CartViewModel? cartList = HttpContext.Session.GetObject<CartViewModel>("ShoppingCart");
