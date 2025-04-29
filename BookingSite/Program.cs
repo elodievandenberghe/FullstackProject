@@ -87,13 +87,9 @@ builder.Services.AddSession(options =>
 {
     options.Cookie.Name = "be.VIVES.Session";
     options.IdleTimeout = TimeSpan.FromDays(1);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
 });
-
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)  
-    .AddCookie(options =>  
-    {  
-        options.LoginPath = "/Identity/Account/Register";  
-    });  
 
 var app = builder.Build();
 
@@ -121,7 +117,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseSession();
 app.UseRouting();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
