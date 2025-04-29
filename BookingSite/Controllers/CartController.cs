@@ -34,4 +34,9 @@ public class CartController : Controller
         }
         return View(cartList);
     }
+
+    public IActionResult Checkout()
+    {
+        return View();
+    }
 }
