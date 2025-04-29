@@ -53,6 +53,7 @@ public class FlightsOverviewController : Controller
         var lstClasses = _mapper.Map<List<TravelClassViewModel>>(await _travelClassService.GetAllAsync());
         var ticketOverviewVmViewModel = new TicketOverviewViewModel()
         {
+            
             FlightId = flightViewModel.Id,
             FromAirport = flightViewModel.FromAirport,
             ToAirport = flightViewModel.ToAirport,
@@ -68,6 +69,7 @@ public class FlightsOverviewController : Controller
     [HttpPost]
     public IActionResult AddToShoppingCart(TicketOverviewViewModel ticketOverview)
     {
+        Console.WriteLine(ticketOverview.FlightId);
         var item = new CartItemViewModel()
         {
             FlightId = ticketOverview.FlightId,

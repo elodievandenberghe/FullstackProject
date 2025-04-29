@@ -86,16 +86,16 @@ public class TicketDAO : ITicketDAO
         }
     }
 
-    public async Task<Ticket>? GetBySeatId(int id)
+    public async Task<Ticket?> GetBySeatId(int id)
     {
         try
         {
-            return await _dbContext.Tickets.Where(t => t.SeatId == id).FirstAsync();
+            return await _dbContext.Tickets.Where(t => t.SeatId == id)?.FirstAsync();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error in UpdateAsync: {ex.Message}");
-            throw;
+            return null;
         }    
     }
 }

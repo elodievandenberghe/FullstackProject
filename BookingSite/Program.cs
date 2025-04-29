@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using BookingSite.Data;
 using BookingSite.Domains.Context;
@@ -8,7 +7,6 @@ using BookingSite.Repositories.Interfaces;
 using BookingSite.Services;
 using BookingSite.Services.Interfaces;
 using BookingSite.Utils;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.OpenApi.Models;
 

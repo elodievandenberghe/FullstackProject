@@ -17,11 +17,12 @@
 <div>
     <!--Om de shopping cart te laten werken met een button, moeten we dit doen om een form aan te maken en dit te posten-->
     <form asp-action="AddToShoppingCart" method="post">
-        <input type="hidden" name="Date" value="@Model.Date" />
-        <input type="hidden" name="FromAirport" value="@Model.FromAirport" />
-        <input type="hidden" name="ToAirport" value="@Model.ToAirport" />
-        <input type="hidden" name="RouteSegments" value="@Model.RouteSegments" />
-        <input type="hidden" name="Price" value="@Model.Price" />
+        <input type="hidden" name="Date" value="@Model.FlightId" />
+        <input type="hidden" name="Date" value="@Model.Date"/>
+        <input type="hidden" name="FromAirport" value="@Model.FromAirport"/>
+        <input type="hidden" name="ToAirport" value="@Model.ToAirport"/>
+        <input type="hidden" name="RouteSegments" value="@Model.RouteSegments"/>
+        <input type="hidden" name="Price" value="@Model.Price"/>
 
         <p>Mealchoice:</p>
         <select asp-for="SelectedMeal" asp-items="@Model.Meals"></select>

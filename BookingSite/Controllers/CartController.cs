@@ -52,11 +52,12 @@ public class CartController : Controller
         CartViewModel cartlist = await GetList();
         foreach (var item in cartlist.Carts)
         {
+            Console.WriteLine(item.FlightId);
             var seat = await GetFirstAvailableSeat(item.ClassId);
             var ticket = new Ticket()
             {
                 UserId = User.FindFirstValue(ClaimTypes.NameIdentifier),
-                FlightId = item.FlightId,
+                FlightId = 1,
                 IsCancelled = false,
                 MealId = item.MealId,
                 SeatId = seat.Id,
