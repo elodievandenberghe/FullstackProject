@@ -1,0 +1,52 @@
+@model BookingSite.ViewModels.CartViewModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+
+<h1>Index</h1>
+
+@if (Model.Carts != null)
+{
+    <div>
+
+        @foreach (var item in Model.Carts)
+        {
+         
+            <p>
+                @Html.DisplayFor(modelItem => item.FromAirport)
+            </p>
+            <p>
+                @Html.DisplayFor(modelItem => item.ToAirport)
+            </p>
+            <p>
+                @Html.DisplayFor(modelItem => item.RouteSegments)
+            </p>
+            <p>
+                @Html.DisplayFor(modelItem => item.Date)
+            </p>
+            <p>
+                @Html.DisplayFor(modelItem => item.Price)
+            </p>
+            <p>
+                @Html.DisplayFor(modelItem => item.ClassType)
+            </p>
+            <p>
+                @Html.DisplayFor(modelItem => item.MealDescription)
+            </p> 
+            <p>
+                ------------------------------------------------------
+            </p>
+        }
+        
+    </div>
+    
+    <div>
+        <p>Total: <br/> </p>
+        <p>@Model.ComputeTotalValue()</p>
+        @Html.ActionLink("Complete your purchase", "PurchaseComplete", Model)
+    </div>
+}else{
+    <p>no Data</p>
+}

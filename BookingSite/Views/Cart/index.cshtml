@@ -68,7 +68,7 @@
     <div>
         <p>Totaal: <br/> </p>
         <p>@Model.ComputeTotalValue()</p>
-        @Html.ActionLink("Proceed to checkout", "Buy", Model)
+        @Html.ActionLink("Proceed to checkout", "Checkout", Model.Carts)
     </div>
 }else{
     <p>no Data</p>
