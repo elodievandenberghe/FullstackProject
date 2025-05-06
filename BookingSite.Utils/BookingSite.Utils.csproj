@@ -13,4 +13,9 @@
         <PackageReference Include="SendWithBrevo" Version="1.0.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\BookingSite.Domains\BookingSite.Domains.csproj" />
+      <ProjectReference Include="..\BookingSite.Services\BookingSite.Services.csproj" />
+    </ItemGroup>
+
 </Project>

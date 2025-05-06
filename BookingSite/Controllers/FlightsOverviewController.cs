@@ -6,6 +6,8 @@ using BookingSite.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using BookingSite.Extension;
+using BookingSite.Utils.DatabaseLogicFunctions;
+using BookingSite.Utils.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 
 namespace BookingSite.Controllers;
@@ -15,16 +17,19 @@ public class FlightsOverviewController : Controller
     private IService<Flight, int> _flightService;
     private IMealChoiceService _mealService;
     private IService<TravelClass, int> _travelClassService;
+    private SeatAvailability _seatAvailability;
 
     private readonly IMapper _mapper;
 
     public FlightsOverviewController(IMapper mapper, IService<Flight, int> flightService, 
-        IMealChoiceService mealService, IService<TravelClass, int> travelServiceService)
+        IMealChoiceService mealService, IService<TravelClass, int> travelServiceService,
+        ITicketService ticketService, ISeatService seatService)
     {
         _mapper = mapper;
         _flightService = flightService;
         _mealService = mealService;
         _travelClassService = travelServiceService; 
+        _seatAvailability = new SeatAvailability(seatService, ticketService);
     }
 
     [Authorize]
@@ -51,6 +56,35 @@ public class FlightsOverviewController : Controller
     {
         var lstMealChoices = _mapper.Map<List<MealChoiceViewModel>>(await _mealService.GetByAirportId(flightViewModel.ToAirportId));
         var lstClasses = _mapper.Map<List<TravelClassViewModel>>(await _travelClassService.GetAllAsync());
+
+        try
+        {
+            await _seatAvailability.GetFirstAvailableSeat(1);
+        }
+        catch (NoSeatAvailableException ex)
+        {
+            Console.WriteLine(ex.Message);
+            lstClasses[0] = new TravelClassViewModel()
+            {
+                Id = -1,
+                Type = "Business class seats are no longer available",
+                Available = false,
+            };
+        }
+        try
+        {
+            await _seatAvailability.GetFirstAvailableSeat(2);
+        }
+        catch (NoSeatAvailableException ex)
+        {
+            Console.WriteLine(ex.Message);
+            lstClasses[0] = new TravelClassViewModel()
+            {
+                Id = -1,
+                Type = "Economy class seats are no longer available",
+                Available = false,
+            };        
+        }
         var ticketOverviewVmViewModel = new TicketOverviewViewModel()
         {
             
@@ -60,7 +94,7 @@ public class FlightsOverviewController : Controller
             RouteSegments = flightViewModel.RouteSegments,
             Date = flightViewModel.Date,
             Meals = new SelectList(lstMealChoices, "Id", "Description"), 
-            Classes = new SelectList(lstClasses, "Id", "Type"), 
+            Classes = lstClasses, 
             Price =flightViewModel.Price
         };
         

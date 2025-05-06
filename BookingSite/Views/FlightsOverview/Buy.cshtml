@@ -1,3 +1,4 @@
+@using BookingSite.ViewModels
 @model BookingSite.ViewModels.TicketOverviewViewModel
 
 <div>
@@ -28,7 +29,19 @@
         <select asp-for="SelectedMeal" asp-items="@Model.Meals"></select>
 
         <p>Travel class: </p>
-        <select asp-for="SelectedClass" asp-items="@Model.Classes"></select>
+        <select name="SelectedClass">
+            @foreach (TravelClassViewModel item in Model.Classes)
+            {
+                @if (item.Available)
+                {
+                    <option value="@item.Id">@item.Type</option>
+                }
+                else
+                {
+                    <option value="@item.Id" disabled="disabled">@item.Type</option>
+                }
+            }
+        </select>
         <br/>
         <button type="submit">Add to shopping cart</button>
     </form>

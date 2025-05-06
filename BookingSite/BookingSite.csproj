@@ -37,6 +37,7 @@
 
     <ItemGroup>
       <Folder Include="Areas\Identity\" />
+      <Folder Include="Exceptions\" />
     </ItemGroup>
 
 </Project>
