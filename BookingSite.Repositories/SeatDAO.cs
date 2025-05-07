@@ -1,4 +1,4 @@
-using BookingSite.Domains.Context;
+using BookingSite.Domains.DatabaseContext;
 using BookingSite.Domains.Models;
 using BookingSite.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;

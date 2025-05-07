@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using BookingSite.Data;
-using BookingSite.Domains.Context;
+using BookingSite.Domains.DatabaseContext;
 using BookingSite.Domains.Models;
 using BookingSite.Repositories;
 using BookingSite.Repositories.Interfaces;
