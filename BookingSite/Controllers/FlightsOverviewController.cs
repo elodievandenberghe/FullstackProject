@@ -17,19 +17,19 @@ public class FlightsOverviewController : Controller
     private IService<Flight, int> _flightService;
     private IMealChoiceService _mealService;
     private IService<TravelClass, int> _travelClassService;
-    private SeatAvailability _seatAvailability;
+    private FlightCapacityChecker _flightCapacityChecker;
 
     private readonly IMapper _mapper;
 
     public FlightsOverviewController(IMapper mapper, IService<Flight, int> flightService, 
         IMealChoiceService mealService, IService<TravelClass, int> travelServiceService,
-        ITicketService ticketService, ISeatService seatService)
+        ITicketService ticketService)
     {
         _mapper = mapper;
         _flightService = flightService;
         _mealService = mealService;
-        _travelClassService = travelServiceService; 
-        _seatAvailability = new SeatAvailability(seatService, ticketService);
+        _travelClassService = travelServiceService;
+        _flightCapacityChecker = new FlightCapacityChecker(flightService, ticketService);
     }
 
     [Authorize]
@@ -40,7 +40,23 @@ public class FlightsOverviewController : Controller
             var lstFlights = await _flightService.GetAllAsync();
             if (lstFlights != null)
             {
-                return View(_mapper.Map<List<FlightViewModel>>(lstFlights));
+                var flightViewModels = _mapper.Map<List<FlightViewModel>>(lstFlights);
+                
+                // For each flight, check availability and set capacity info
+                foreach (var flight in flightViewModels)
+                {
+                    try
+                    {
+                        var availableSeats = await _flightCapacityChecker.GetAvailableSeats(flight.Id);
+                        flight.AvailableSeats = availableSeats;
+                    }
+                    catch (NoPlaneAssignedException)
+                    {
+                        flight.AvailableSeats = 0;
+                    }
+                }
+                
+                return View(flightViewModels);
             }
         }
         catch (Exception ex)
@@ -59,35 +75,29 @@ public class FlightsOverviewController : Controller
 
         try
         {
-            await _seatAvailability.GetFirstAvailableSeat(1);
-        }
-        catch (NoSeatAvailableException ex)
-        {
-            Console.WriteLine(ex.Message);
-            lstClasses[0] = new TravelClassViewModel()
+            bool isAvailable = await _flightCapacityChecker.CheckFlightAvailability(flightViewModel.Id);
+            if (!isAvailable)
             {
-                Id = -1,
-                Type = "Business class seats are no longer available",
-                Available = false,
-            };
+                // No seats available for this flight
+                lstClasses.ForEach(c => {
+                    c.Id = -1;
+                    c.Type = "No seats available for this flight";
+                    c.Available = false;
+                });
+            }
         }
-        try
+        catch (NoPlaneAssignedException ex)
         {
-            await _seatAvailability.GetFirstAvailableSeat(2);
+            // No plane assigned to this flight
+            lstClasses.ForEach(c => {
+                c.Id = -1;
+                c.Type = ex.Message;
+                c.Available = false;
+            });
         }
-        catch (NoSeatAvailableException ex)
-        {
-            Console.WriteLine(ex.Message);
-            lstClasses[0] = new TravelClassViewModel()
-            {
-                Id = -1,
-                Type = "Economy class seats are no longer available",
-                Available = false,
-            };        
-        }
+        
         var ticketOverviewVmViewModel = new TicketOverviewViewModel()
         {
-            
             FlightId = flightViewModel.Id,
             FromAirport = flightViewModel.FromAirport,
             ToAirport = flightViewModel.ToAirport,
@@ -95,11 +105,12 @@ public class FlightsOverviewController : Controller
             Date = flightViewModel.Date,
             Meals = new SelectList(lstMealChoices, "Id", "Description"), 
             Classes = lstClasses, 
-            Price =flightViewModel.Price
+            Price = flightViewModel.Price
         };
         
         return View(ticketOverviewVmViewModel); 
     }
+    
     [HttpPost]
     public IActionResult AddToShoppingCart(TicketOverviewViewModel ticketOverview)
     {

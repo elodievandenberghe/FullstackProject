@@ -50,6 +50,10 @@ builder.Services.AddTransient<IService<TravelClass, int>, TravelClassesService>(
 builder.Services.AddTransient<ITicketDAO, TicketDAO>();
 builder.Services.AddTransient<ITicketService, TicketService>();
 
+builder.Services.AddTransient<IPlaneDAO, PlaneDAO>();
+builder.Services.AddTransient<IPlaneService, PlaneService>();
+
+// You can keep SeatDAO and SeatService temporarily if needed for data migration
 builder.Services.AddTransient<ISeatDAO, SeatDAO>();
 builder.Services.AddTransient<ISeatService, SeatService>();
 

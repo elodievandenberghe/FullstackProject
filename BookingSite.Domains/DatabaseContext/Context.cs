@@ -36,6 +36,8 @@ public partial class Context : DbContext
 
     public virtual DbSet<MealChoice> MealChoices { get; set; }
 
+    public virtual DbSet<Plane> Planes { get; set; }
+
     public virtual DbSet<Route> Routes { get; set; }
 
     public virtual DbSet<RouteSegment> RouteSegments { get; set; }
@@ -152,6 +154,10 @@ public partial class Context : DbContext
             entity.HasOne(d => d.Route).WithMany(p => p.Flights)
                 .HasForeignKey(d => d.RouteId)
                 .HasConstraintName("FK__Flights__RouteId__3C34F16F");
+                
+            entity.HasOne(d => d.Plane).WithMany(p => p.Flights)
+                .HasForeignKey(d => d.PlaneId)
+                .HasConstraintName("FK__Flights__PlaneId__3C34F170");
         });
 
         modelBuilder.Entity<MealChoice>(entity =>
@@ -168,6 +174,15 @@ public partial class Context : DbContext
             entity.HasOne(d => d.Airport).WithMany(p => p.MealChoices)
                 .HasForeignKey(d => d.AirportId)
                 .HasConstraintName("FK__MealChoic__Airpo__3F115E1A");
+        });
+        
+        modelBuilder.Entity<Plane>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Planes__3214EC07303D93A1");
+
+            entity.Property(e => e.Name)
+                .HasMaxLength(100)
+                .IsUnicode(false);
         });
 
         modelBuilder.Entity<Route>(entity =>
@@ -222,7 +237,6 @@ public partial class Context : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__Tickets__3214EC0705CCB4DD");
 
-            //entity.Property(e => e.UserId).HasMaxLength(450);
             entity.Property(e => e.BookingId).HasMaxLength(450);
 
             entity.HasOne(d => d.Flight).WithMany(p => p.Tickets)
@@ -233,16 +247,9 @@ public partial class Context : DbContext
                 .HasForeignKey(d => d.MealId)
                 .HasConstraintName("FK__Tickets__MealId__42E1EEFE");
 
-            entity.HasOne(d => d.Seat).WithMany(p => p.Tickets)
-                .HasForeignKey(d => d.SeatId)
-                .HasConstraintName("FK__Tickets__SeatId__43D61337");
-
             entity.HasOne(d => d.Booking).WithMany(p => p.Tickets)
                 .HasForeignKey(d => d.BookingId)
                 .HasConstraintName("FK__Tickets__Booking");
-            //entity.HasOne(d => d.User).WithMany(p => p.Tickets)
-            //    .HasForeignKey(d => d.UserId)
-            //    .HasConstraintName("Tickets_AspNetUsers_FK");
         });
 
         modelBuilder.Entity<Booking>(entity =>

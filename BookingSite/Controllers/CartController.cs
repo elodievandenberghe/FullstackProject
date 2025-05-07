@@ -19,11 +19,11 @@ namespace BookingSite.Controllers;
 
 public class CartController : Controller
 {
-    private SeatAvailability _seatAvailability;
+    private FlightCapacityChecker _flightCapacityChecker;
     private IMealChoiceService _mealService;
     private IService<TravelClass, int> _travelClassService;
     private ITicketService _ticketService;
-    private ISeatService _seatService;
+    private IService<Flight, int> _flightService;
     private IEmailSender _emailSender;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IBookingService _bookingService;
@@ -31,18 +31,19 @@ public class CartController : Controller
     private readonly IMapper _mapper;
 
     public CartController(IMapper mapper, IMealChoiceService mealService,
-        IService<TravelClass, int> travelServiceService, ITicketService ticketService
-        , UserManager<ApplicationUser> userManager, ISeatService seatService, IEmailSender eaEmailSender, IBookingService bookingService)
+        IService<TravelClass, int> travelServiceService, ITicketService ticketService,
+        UserManager<ApplicationUser> userManager, IEmailSender emailSender, 
+        IBookingService bookingService, IService<Flight, int> flightService)
     {
         _mapper = mapper;
         _mealService = mealService;
         _travelClassService = travelServiceService;
         _ticketService = ticketService;
         _userManager = userManager;
-        _seatService = seatService;
-        _emailSender = eaEmailSender;
-        _seatAvailability = new SeatAvailability(seatService, ticketService);
+        _emailSender = emailSender;
         _bookingService = bookingService;
+        _flightService = flightService;
+        _flightCapacityChecker = new FlightCapacityChecker(_flightService, _ticketService);
     }
 
     [Authorize]
@@ -77,16 +78,32 @@ public class CartController : Controller
 
                 foreach (var item in cartlist.Carts)
                 {
-                    Console.WriteLine(item.FlightId);
-                    var seat = await _seatAvailability.GetFirstAvailableSeat(item.ClassId);
+                    // Check if the flight has available seats
+                    bool isAvailable;
+                    try 
+                    {
+                        isAvailable = await _flightCapacityChecker.CheckFlightAvailability(item.FlightId);
+                    }
+                    catch (NoPlaneAssignedException) 
+                    {
+                        return View("NoPlaneAssigned");
+                    }
+                    
+                    if (!isAvailable) 
+                    {
+                        return View("NoSeatAvailable");
+                    }
+
+                    // Create ticket - seat number will be assigned automatically in TicketDAO
                     var ticket = new Ticket()
                     {
                         BookingId = booking.Id,
                         FlightId = item.FlightId,
                         IsCancelled = false,
-                        MealId = item.MealId,
-                        SeatId = seat.Id
+                        MealId = item.MealId
+                        // SeatNumber will be assigned in the DAO
                     };
+                    
                     await _ticketService.AddAsync(ticket);
                 }
 
@@ -98,10 +115,6 @@ public class CartController : Controller
             }
 
             return View();
-        }
-        catch (NoSeatAvailableException e)
-        {
-            return View("NoSeatAvailable");
         }
         catch (Exception e)
         {
@@ -129,7 +142,6 @@ public class CartController : Controller
 
         return cartList;
     }
-
 }
 
 

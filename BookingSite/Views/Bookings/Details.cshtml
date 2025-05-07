@@ -36,10 +36,7 @@
                             }
                         </td>
                         <td>
-                            @if (ticket.Seat != null)
-                            {
-                                @ticket.Seat.SeatNumber
-                            }
+                            @(ticket.SeatNumber.HasValue ? ticket.SeatNumber.Value.ToString() : "Not assigned")
                         </td>
                         <td>
                             @if (ticket.Meal != null)

@@ -11,7 +11,7 @@ public partial class Ticket
 
     public int? MealId { get; set; }
 
-    public int? SeatId { get; set; }
+    public int? SeatNumber { get; set; }
     public int? BookingId { get; set; }
 
     public bool? IsCancelled { get; set; }
@@ -19,8 +19,6 @@ public partial class Ticket
     public virtual Flight? Flight { get; set; }
 
     public virtual MealChoice? Meal { get; set; }
-
-    public virtual Seat? Seat { get; set; }
 
     public virtual Booking? Booking { get; set; }
 }

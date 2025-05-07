@@ -9,9 +9,13 @@ public partial class Flight
 
     public int? RouteId { get; set; }
 
+    public int? PlaneId { get; set; }
+
     public DateOnly? Date { get; set; }
 
     public virtual Route? Route { get; set; }
+
+    public virtual Plane? Plane { get; set; }
 
     public virtual ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
 }

@@ -96,7 +96,6 @@ public class BookingDAO : IBookingDAO
                 .Include(b => b.Tickets)
                 .ThenInclude(t => t.Flight)
                 .Include(b => b.Tickets)
-                .ThenInclude(t => t.Seat)
                 .Include(b => b.Tickets)
                 .ThenInclude(t => t.Meal)
                 .Where(b => b.UserId == userId)

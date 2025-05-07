@@ -10,4 +10,6 @@ public class FlightViewModel
     public int ToAirportId { get; set; }
     public string? RouteSegments { get; set; }
     public double Price { get; set; }
+    public int AvailableSeats { get; set; }
+
 }

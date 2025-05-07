@@ -46,7 +46,9 @@ public class FlightDAO : IDAO<Flight, int>
     {
         try
         {
-            return await _dbContext.Flights.FindAsync(id);
+            return await _dbContext.Flights
+                .Include(f => f.Plane)
+                .FirstOrDefaultAsync(f => f.Id == id);
         }
         catch (Exception ex)
         {
@@ -64,8 +66,8 @@ public class FlightDAO : IDAO<Flight, int>
                 .Include(f => f.Route.FromAirport)
                 .Include(f => f.Route.RouteSegments)
                 .ThenInclude(rs => rs.Airport)
+                .Include(f => f.Plane)
                 .ToListAsync();
-
         }
         catch (Exception ex)
         {

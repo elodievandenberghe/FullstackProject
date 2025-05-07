@@ -6,7 +6,7 @@ namespace BookingSite.Services;
 
 public class TicketService : ITicketService
 {
-    private ITicketDAO _ticketDAO;
+    private readonly ITicketDAO _ticketDAO;
 
     public TicketService(ITicketDAO ticketDAO) 
     {
@@ -23,23 +23,24 @@ public class TicketService : ITicketService
         await _ticketDAO.DeleteAsync(entity);
     }
 
-    public async Task<Ticket?> FindByIdAsync(int Id)
+    public async Task<Ticket?> FindByIdAsync(int id)
     {
-        return await _ticketDAO.FindByIdAsync(Id);
+        return await _ticketDAO.FindByIdAsync(id);
     }
 
     public async Task<IEnumerable<Ticket>?> GetAllAsync()
     {
         return await _ticketDAO.GetAllAsync();
     }
+    
+    // Implement the new method
+    public async Task<IEnumerable<Ticket>?> GetByFlightIdAsync(int flightId)
+    {
+        return await _ticketDAO.GetByFlightIdAsync(flightId);
+    }
 
     public async Task UpdateAsync(Ticket entity)
     {
         await _ticketDAO.UpdateAsync(entity);
-    }
-
-    public async Task<Ticket?> GetBySeatId(int id)
-    {
-        return await _ticketDAO.GetBySeatId(id); 
     }
 }

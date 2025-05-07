@@ -69,10 +69,10 @@ public class AutoMapperProfile : Profile
                 .ForMember(dest => dest.MealType,
                            opt => opt.MapFrom(src => src.Meal != null ? src.Meal.Type : null))
                 .ForMember(dest => dest.SeatNumber,
-                           opt => opt.MapFrom(src => src.Seat != null ? src.Seat.SeatNumber : null));
+                           opt => opt.MapFrom(src => src.SeatNumber.HasValue ? src.SeatNumber.ToString() : "Not assigned"));
 
-            // TravelClass -> TravelClassViewModel
-            CreateMap<TravelClass, TravelClassViewModel>();
+        // TravelClass -> TravelClassViewModel
+        CreateMap<TravelClass, TravelClassViewModel>();
 
             // AspNetUser -> AspNetUserViewModel
             CreateMap<AspNetUser, AspNetUserViewModel>()
