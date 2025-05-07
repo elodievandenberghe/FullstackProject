@@ -94,6 +94,11 @@ public class CartController : Controller
 public async Task<CartViewModel> GetList()
     {
         CartViewModel? cartList = HttpContext.Session.GetObject<CartViewModel>("ShoppingCart");
+        if (cartList == null)
+        {
+            cartList = new CartViewModel();
+            HttpContext.Session.SetObject("ShoppingCart", cartList);
+        }
         foreach (var item in cartList.Carts)
         {
             var mealDescription = await _mealService.FindByIdAsync(item.MealId);
