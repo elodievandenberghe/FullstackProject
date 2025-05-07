@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BookingSite.Controllers;
 
+// TODO: Map to a ViewModel
+
 [Authorize]
 public class BookingsController : Controller
 {
