@@ -54,7 +54,9 @@ builder.Services.AddTransient<ISeatDAO, SeatDAO>();
 builder.Services.AddTransient<ISeatService, SeatService>();
 
 builder.Services.AddTransient<IEmailSender, EmailSender>();
- 
+
+builder.Services.AddTransient<IBookingDAO, BookingDAO>();
+builder.Services.AddTransient<IBookingService, BookingService>();
 
 builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration);
 

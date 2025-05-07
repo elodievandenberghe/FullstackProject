@@ -26,12 +26,13 @@ public class CartController : Controller
     private ISeatService _seatService;
     private IEmailSender _emailSender;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IBookingService _bookingService;
 
     private readonly IMapper _mapper;
 
     public CartController(IMapper mapper, IMealChoiceService mealService,
         IService<TravelClass, int> travelServiceService, ITicketService ticketService
-        , UserManager<ApplicationUser> userManager, ISeatService seatService, IEmailSender eaEmailSender)
+        , UserManager<ApplicationUser> userManager, ISeatService seatService, IEmailSender eaEmailSender, IBookingService bookingService)
     {
         _mapper = mapper;
         _mealService = mealService;
@@ -41,6 +42,7 @@ public class CartController : Controller
         _seatService = seatService;
         _emailSender = eaEmailSender;
         _seatAvailability = new SeatAvailability(seatService, ticketService);
+        _bookingService = bookingService;
     }
 
     [Authorize]
@@ -61,21 +63,38 @@ public class CartController : Controller
         try
         {
             CartViewModel cartlist = await GetList();
-            foreach (var item in cartlist.Carts)
+            if (cartlist.Carts != null && cartlist.Carts.Any())
             {
-                Console.WriteLine(item.FlightId);
-                var seat = await _seatAvailability.GetFirstAvailableSeat(item.ClassId);
-                var ticket = new Ticket()
+                // Create a single booking for all tickets in the cart
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var booking = new Booking
                 {
-                    UserId = User.FindFirstValue(ClaimTypes.NameIdentifier),
-                    FlightId = 1,
-                    IsCancelled = false,
-                    MealId = item.MealId,
-                    SeatId = seat.Id,
+                    UserId = userId
                 };
-                await _ticketService.AddAsync(ticket);
-                _emailSender.SendEmailAsync(User.FindFirstValue(ClaimTypes.Email), "Your purchase has been completed!",
-                    "Thank you for buying a ticket :3");
+
+                // Add booking to database to get its ID
+                await _bookingService.AddAsync(booking);
+
+                foreach (var item in cartlist.Carts)
+                {
+                    Console.WriteLine(item.FlightId);
+                    var seat = await _seatAvailability.GetFirstAvailableSeat(item.ClassId);
+                    var ticket = new Ticket()
+                    {
+                        BookingId = booking.Id,
+                        FlightId = item.FlightId,
+                        IsCancelled = false,
+                        MealId = item.MealId,
+                        SeatId = seat.Id
+                    };
+                    await _ticketService.AddAsync(ticket);
+                }
+
+                _emailSender.SendEmailAsync(User.FindFirstValue(ClaimTypes.Email), "Your booking has been completed!",
+                    "Thank you for booking with us. Your booking reference number is " + booking.Id);
+
+                // Clear the shopping cart after successful purchase
+                HttpContext.Session.Remove("ShoppingCart");
             }
 
             return View();
@@ -86,12 +105,13 @@ public class CartController : Controller
         }
         catch (Exception e)
         {
+            Console.WriteLine($"Error in PurchaseComplete: {e.Message}");
             return View("Error");
         }
     }
 
 
-public async Task<CartViewModel> GetList()
+    public async Task<CartViewModel> GetList()
     {
         CartViewModel? cartList = HttpContext.Session.GetObject<CartViewModel>("ShoppingCart");
         if (cartList == null)

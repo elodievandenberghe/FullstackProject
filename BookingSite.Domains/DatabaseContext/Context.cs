@@ -45,6 +45,7 @@ public partial class Context : DbContext
     public virtual DbSet<Seat> Seats { get; set; }
 
     public virtual DbSet<Ticket> Tickets { get; set; }
+    public virtual DbSet<Booking> Bookings { get; set; }
 
     public virtual DbSet<TravelClass> TravelClasses { get; set; }
 
@@ -221,7 +222,8 @@ public partial class Context : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__Tickets__3214EC0705CCB4DD");
 
-            entity.Property(e => e.UserId).HasMaxLength(450);
+            //entity.Property(e => e.UserId).HasMaxLength(450);
+            entity.Property(e => e.BookingId).HasMaxLength(450);
 
             entity.HasOne(d => d.Flight).WithMany(p => p.Tickets)
                 .HasForeignKey(d => d.FlightId)
@@ -235,9 +237,24 @@ public partial class Context : DbContext
                 .HasForeignKey(d => d.SeatId)
                 .HasConstraintName("FK__Tickets__SeatId__43D61337");
 
-            entity.HasOne(d => d.User).WithMany(p => p.Tickets)
+            entity.HasOne(d => d.Booking).WithMany(p => p.Tickets)
+                .HasForeignKey(d => d.BookingId)
+                .HasConstraintName("FK__Tickets__Booking");
+            //entity.HasOne(d => d.User).WithMany(p => p.Tickets)
+            //    .HasForeignKey(d => d.UserId)
+            //    .HasConstraintName("Tickets_AspNetUsers_FK");
+        });
+
+        modelBuilder.Entity<Booking>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Bookings__3214EC07");
+
+            entity.Property(e => e.UserId).HasMaxLength(450);
+
+            entity.HasOne(d => d.User).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.UserId)
-                .HasConstraintName("Tickets_AspNetUsers_FK");
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Bookings_AspNetUsers");
         });
 
         modelBuilder.Entity<TravelClass>(entity =>

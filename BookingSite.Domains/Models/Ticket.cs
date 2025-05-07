@@ -12,10 +12,9 @@ public partial class Ticket
     public int? MealId { get; set; }
 
     public int? SeatId { get; set; }
+    public int? BookingId { get; set; }
 
     public bool? IsCancelled { get; set; }
-
-    public string UserId { get; set; } = null!;
 
     public virtual Flight? Flight { get; set; }
 
@@ -23,5 +22,5 @@ public partial class Ticket
 
     public virtual Seat? Seat { get; set; }
 
-    public virtual AspNetUser User { get; set; } = null!;
+    public virtual Booking? Booking { get; set; }
 }
