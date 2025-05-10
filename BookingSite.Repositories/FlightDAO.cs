@@ -48,6 +48,12 @@ public class FlightDAO : IDAO<Flight, int>
         {
             return await _dbContext.Flights
                 .Include(f => f.Plane)
+                .Include(f => f.Route)
+                .Include(f => f.Route.ToAirport)
+                .Include(f => f.Route.FromAirport)
+                .Include(f => f.Route.RouteSegments)
+                .ThenInclude(rs => rs.Airport)
+                .Include(f => f.Tickets)
                 .FirstOrDefaultAsync(f => f.Id == id);
         }
         catch (Exception ex)

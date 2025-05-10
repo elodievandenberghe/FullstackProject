@@ -50,7 +50,7 @@
                   € @Html.DisplayFor(modelItem => item.Price)
                 </td>
                 <td>
-                    @Html.ActionLink("Buy your ticket", "Buy", item) 
+                    @Html.ActionLink("Buy your ticket", "Buy", new{item.Id}) 
                 </td>
             </tr>
         }
