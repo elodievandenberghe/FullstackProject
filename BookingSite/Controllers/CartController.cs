@@ -63,51 +63,48 @@ public class CartController : Controller
             CartViewModel cartlist = await GetList();
             if (cartlist.Carts != null && cartlist.Carts.Any())
             {
-                // Create a single booking for all tickets in the cart
+                // Check availability for all flights first
+                foreach (var item in cartlist.Carts)
+                {
+                    try
+                    {
+                        if (!await _flightCapacityChecker.CheckFlightAvailability(item.FlightId))
+                        {
+                            return View("NoSeatAvailable");
+                        }
+                    }
+                    catch (NoPlaneAssignedException)
+                    {
+                        return View("NoPlaneAssigned");
+                    }
+                }
+
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 var booking = new Booking
                 {
                     UserId = userId
                 };
 
-                // Add booking to database to get its ID
                 await _bookingService.AddAsync(booking);
 
                 foreach (var item in cartlist.Carts)
                 {
-                    // Check if the flight has available seats
-                    bool isAvailable;
-                    try 
-                    {
-                        isAvailable = await _flightCapacityChecker.CheckFlightAvailability(item.FlightId);
-                    }
-                    catch (NoPlaneAssignedException) 
-                    {
-                        return View("NoPlaneAssigned");
-                    }
-                    
-                    if (!isAvailable) 
-                    {
-                        return View("NoSeatAvailable");
-                    }
-
-                    // Create ticket - seat number will be assigned automatically in TicketDAO
-                    var ticket = new Ticket()
+                    var ticket = new Ticket
                     {
                         BookingId = booking.Id,
                         FlightId = item.FlightId,
                         IsCancelled = false,
                         MealId = item.MealId
-                        // SeatNumber will be assigned in the DAO
                     };
-                    
+
                     await _ticketService.AddAsync(ticket);
                 }
 
-                _emailSender.SendEmailAsync(User.FindFirstValue(ClaimTypes.Email), "Your booking has been completed!",
-                    "Thank you for booking with us. Your booking reference number is " + booking.Id);
+                await _emailSender.SendEmailAsync(
+                    User.FindFirstValue(ClaimTypes.Email),
+                    "Your booking has been completed!",
+                    $"Thank you for booking with us. Your booking reference number is {booking.Id}");
 
-                // Clear the shopping cart after successful purchase
                 HttpContext.Session.Remove("ShoppingCart");
             }
 
@@ -132,7 +129,15 @@ public class CartController : Controller
         foreach (var item in cartList.Carts)
         {
             var mealDescription = await _mealService.FindByIdAsync(item.MealId);
-            item.MealDescription = mealDescription.Description;
+
+            if (mealDescription != null)
+            {
+                item.MealDescription = mealDescription.Description;
+            }
+            else
+            {
+                item.MealDescription = "Unknown Meal";
+            }
             // NOT NEEDED BECAUSE ENUM
             //var classType = await _travelClassService.FindByIdAsync(item.ClassId);
             //item.ClassType = classType.Type;

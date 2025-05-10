@@ -73,10 +73,10 @@ public class FlightsOverviewController : Controller
 
         // Create seat class options
         var seatClasses = new List<SeatClassViewModel>
-    {
-        new SeatClassViewModel { Id = (int)SeatClass.FirstClass, Name = "First Class", Available = true },
-        new SeatClassViewModel { Id = (int)SeatClass.SecondClass, Name = "Second Class", Available = true }
-    };
+        {
+            new() { Id = (int)SeatClass.FirstClass, Name = "First Class", Available = true },
+            new() { Id = (int)SeatClass.SecondClass, Name = "Second Class", Available = true }
+        };
 
         try
         {
