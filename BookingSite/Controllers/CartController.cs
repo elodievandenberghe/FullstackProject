@@ -21,7 +21,6 @@ public class CartController : Controller
 {
     private FlightCapacityChecker _flightCapacityChecker;
     private IMealChoiceService _mealService;
-    private IService<TravelClass, int> _travelClassService;
     private ITicketService _ticketService;
     private IService<Flight, int> _flightService;
     private IEmailSender _emailSender;
@@ -30,14 +29,12 @@ public class CartController : Controller
 
     private readonly IMapper _mapper;
 
-    public CartController(IMapper mapper, IMealChoiceService mealService,
-        IService<TravelClass, int> travelServiceService, ITicketService ticketService,
+    public CartController(IMapper mapper, IMealChoiceService mealService, ITicketService ticketService,
         UserManager<ApplicationUser> userManager, IEmailSender emailSender, 
         IBookingService bookingService, IService<Flight, int> flightService)
     {
         _mapper = mapper;
         _mealService = mealService;
-        _travelClassService = travelServiceService;
         _ticketService = ticketService;
         _userManager = userManager;
         _emailSender = emailSender;
@@ -136,8 +133,9 @@ public class CartController : Controller
         {
             var mealDescription = await _mealService.FindByIdAsync(item.MealId);
             item.MealDescription = mealDescription.Description;
-            var classType = await _travelClassService.FindByIdAsync(item.ClassId);
-            item.ClassType = classType.Type;
+            // NOT NEEDED BECAUSE ENUM
+            //var classType = await _travelClassService.FindByIdAsync(item.ClassId);
+            //item.ClassType = classType.Type;
         }
 
         return cartList;

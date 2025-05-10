@@ -1,7 +1,7 @@
 using AutoMapper;
 using BookingSite.Domains.Models;
 using BookingSite.ViewModels;
-using Route = Microsoft.AspNetCore.Routing.Route;
+using Route = BookingSite.Domains.Models.Route;
 
 namespace BookingSite.AutoMapper;
 
@@ -40,7 +40,7 @@ public class AutoMapperProfile : Profile
                            opt => opt.MapFrom(src => src.Airport ));
 
             // Route -> RouteViewModel
-            CreateMap<BookingSite.Domains.Models.Route, RouteViewModel>()
+            CreateMap<Route, RouteViewModel>()
                 .ForMember(dest => dest.FromAirportName,
                     opt => opt.MapFrom(src => src.FromAirport.Name))
                 .ForMember(dest => dest.ToAirportName,
@@ -56,11 +56,6 @@ public class AutoMapperProfile : Profile
                 .ForMember(dest => dest.AirportName,
                            opt => opt.MapFrom(src => src.Airport != null ? src.Airport.Name : null));
 
-            // Seat -> SeatViewModel
-            CreateMap<Seat, SeatViewModel>()
-                .ForMember(dest => dest.TravelClassName,
-                           opt => opt.MapFrom(src => src.TravelClass != null ? src.TravelClass.Type : null));
-
             CreateMap<Ticket, TicketViewModel>()
                 .ForMember(dest => dest.FlightInfo,
                            opt => opt.MapFrom(src => src.Flight != null 
@@ -70,9 +65,6 @@ public class AutoMapperProfile : Profile
                            opt => opt.MapFrom(src => src.Meal != null ? src.Meal.Type : null))
                 .ForMember(dest => dest.SeatNumber,
                            opt => opt.MapFrom(src => src.SeatNumber.HasValue ? src.SeatNumber.ToString() : "Not assigned"));
-
-        // TravelClass -> TravelClassViewModel
-        CreateMap<TravelClass, TravelClassViewModel>();
 
             // AspNetUser -> AspNetUserViewModel
             CreateMap<AspNetUser, AspNetUserViewModel>()

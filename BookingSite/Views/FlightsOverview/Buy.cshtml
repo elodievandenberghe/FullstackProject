@@ -30,15 +30,15 @@
 
         <p>Travel class: </p>
         <select name="SelectedClass">
-            @foreach (TravelClassViewModel item in Model.Classes)
+            @foreach (SeatClassViewModel item in Model.SeatClasses)
             {
                 @if (item.Available)
                 {
-                    <option value="@item.Id">@item.Type</option>
+                    <option value="@item.Id">@item.Name</option>
                 }
                 else
                 {
-                    <option value="@item.Id" disabled="disabled">@item.Type</option>
+                    <option value="@item.Id" disabled="disabled">@item.Name</option>
                 }
             }
         </select>

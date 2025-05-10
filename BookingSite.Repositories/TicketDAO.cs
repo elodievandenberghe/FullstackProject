@@ -21,9 +21,9 @@ public class TicketDAO : ITicketDAO
             // Auto-assign seat if not already assigned and if flight has a plane
             if (!entity.SeatNumber.HasValue && entity.FlightId.HasValue)
             {
-                entity.SeatNumber = await AssignSeatNumber(entity.FlightId.Value);
+                entity.SeatNumber = await AssignSeatNumber(entity.FlightId.Value, entity.SeatClass);
             }
-            
+
             await _dbContext.Tickets.AddAsync(entity);
             await _dbContext.SaveChangesAsync();
         }
@@ -89,9 +89,9 @@ public class TicketDAO : ITicketDAO
             // Auto-assign seat if not already assigned and if flight has a plane
             if (!entity.SeatNumber.HasValue && entity.FlightId.HasValue)
             {
-                entity.SeatNumber = await AssignSeatNumber(entity.FlightId.Value);
+                entity.SeatNumber = await AssignSeatNumber(entity.FlightId.Value, entity.SeatClass);
             }
-            
+
             _dbContext.Tickets.Update(entity);
             await _dbContext.SaveChangesAsync();
         }
@@ -120,7 +120,7 @@ public class TicketDAO : ITicketDAO
         }
     }
 
-    private async Task<int?> AssignSeatNumber(int flightId)
+    private async Task<int?> AssignSeatNumber(int flightId, SeatClass seatClass)
     {
         // Get the flight with its plane
         var flight = await _dbContext.Flights
@@ -132,16 +132,19 @@ public class TicketDAO : ITicketDAO
             return null; // No plane assigned to this flight
         }
 
-        int capacity = flight.Plane.Capacity;
+        int classCapacity = seatClass == SeatClass.FirstClass
+            ? flight.Plane.FirstClassCapacity
+            : flight.Plane.SecondClassCapacity;
 
-        // Get all seat numbers currently in use for this flight (for non-cancelled tickets)
+        // Get all seat numbers currently in use for this flight (for non-cancelled tickets of the same class)
         var usedSeats = await _dbContext.Tickets
-            .Where(t => t.FlightId == flightId && t.IsCancelled != true && t.SeatNumber.HasValue)
+            .Where(t => t.FlightId == flightId && t.IsCancelled != true &&
+                   t.SeatNumber.HasValue && t.SeatClass == seatClass)
             .Select(t => t.SeatNumber.Value)
             .ToListAsync();
 
         // Find the first available seat number
-        for (int seatNum = 1; seatNum <= capacity; seatNum++)
+        for (int seatNum = 1; seatNum <= classCapacity; seatNum++)
         {
             if (!usedSeats.Contains(seatNum))
             {
@@ -152,7 +155,7 @@ public class TicketDAO : ITicketDAO
         // No seats available
         return null;
     }
-    
+
     public async Task<IEnumerable<Ticket>?> GetByFlightId(int flightId)
     {
         try
