@@ -44,12 +44,8 @@ public partial class Context : DbContext
 
     public virtual DbSet<Season> Seasons { get; set; }
 
-    public virtual DbSet<Seat> Seats { get; set; }
-
     public virtual DbSet<Ticket> Tickets { get; set; }
     public virtual DbSet<Booking> Bookings { get; set; }
-
-    public virtual DbSet<TravelClass> TravelClasses { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -180,6 +176,9 @@ public partial class Context : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__Planes__3214EC07303D93A1");
 
+            entity.Property(e => e.FirstClassCapacity);
+            entity.Property(e => e.SecondClassCapacity);
+
             entity.Property(e => e.Name)
                 .HasMaxLength(100)
                 .IsUnicode(false);
@@ -220,24 +219,15 @@ public partial class Context : DbContext
                 .HasConstraintName("FK__Seasons__Airport__2CF2ADDF");
         });
 
-        modelBuilder.Entity<Seat>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK__Seats__3214EC07303D93A1");
-
-            entity.Property(e => e.SeatNumber)
-                .HasMaxLength(10)
-                .IsUnicode(false);
-
-            entity.HasOne(d => d.TravelClass).WithMany(p => p.Seats)
-                .HasForeignKey(d => d.TravelClassId)
-                .HasConstraintName("FK__Seats__TravelCla__31B762FC");
-        });
 
         modelBuilder.Entity<Ticket>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Tickets__3214EC0705CCB4DD");
 
             entity.Property(e => e.BookingId).HasMaxLength(450);
+
+            entity.Property(e => e.SeatClass)
+                .HasConversion<int>();
 
             entity.HasOne(d => d.Flight).WithMany(p => p.Tickets)
                 .HasForeignKey(d => d.FlightId)
@@ -262,15 +252,6 @@ public partial class Context : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Bookings_AspNetUsers");
-        });
-
-        modelBuilder.Entity<TravelClass>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK__TravelCl__3214EC079AB0C82B");
-
-            entity.Property(e => e.Type)
-                .HasMaxLength(50)
-                .IsUnicode(false);
         });
 
         OnModelCreatingPartial(modelBuilder);

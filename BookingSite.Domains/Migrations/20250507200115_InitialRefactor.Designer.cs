@@ -4,6 +4,7 @@ using BookingSite.Domains.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BookingSite.Domains.Migrations
 {
     [DbContext(typeof(Context))]
-    partial class ContextModelSnapshot : ModelSnapshot
+    [Migration("20250507200115_InitialRefactor")]
+    partial class InitialRefactor
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -353,16 +356,13 @@ namespace BookingSite.Domains.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("FirstClassCapacity")
+                    b.Property<int>("Capacity")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
                         .HasMaxLength(100)
                         .IsUnicode(false)
                         .HasColumnType("varchar(100)");
-
-                    b.Property<int>("SecondClassCapacity")
-                        .HasColumnType("int");
 
                     b.HasKey("Id")
                         .HasName("PK__Planes__3214EC07303D93A1");
@@ -449,6 +449,30 @@ namespace BookingSite.Domains.Migrations
                     b.ToTable("Seasons");
                 });
 
+            modelBuilder.Entity("BookingSite.Domains.Models.Seat", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("SeatNumber")
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<int?>("TravelClassId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id")
+                        .HasName("PK__Seats__3214EC07303D93A1");
+
+                    b.HasIndex("TravelClassId");
+
+                    b.ToTable("Seats");
+                });
+
             modelBuilder.Entity("BookingSite.Domains.Models.Ticket", b =>
                 {
                     b.Property<int>("Id")
@@ -470,7 +494,7 @@ namespace BookingSite.Domains.Migrations
                     b.Property<int?>("MealId")
                         .HasColumnType("int");
 
-                    b.Property<int>("SeatClass")
+                    b.Property<int?>("SeatId")
                         .HasColumnType("int");
 
                     b.Property<int?>("SeatNumber")
@@ -485,7 +509,28 @@ namespace BookingSite.Domains.Migrations
 
                     b.HasIndex("MealId");
 
+                    b.HasIndex("SeatId");
+
                     b.ToTable("Tickets");
+                });
+
+            modelBuilder.Entity("BookingSite.Domains.Models.TravelClass", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Type")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id")
+                        .HasName("PK__TravelCl__3214EC079AB0C82B");
+
+                    b.ToTable("TravelClasses");
                 });
 
             modelBuilder.Entity("AspNetUserRole", b =>
@@ -639,6 +684,16 @@ namespace BookingSite.Domains.Migrations
                     b.Navigation("Airport");
                 });
 
+            modelBuilder.Entity("BookingSite.Domains.Models.Seat", b =>
+                {
+                    b.HasOne("BookingSite.Domains.Models.TravelClass", "TravelClass")
+                        .WithMany("Seats")
+                        .HasForeignKey("TravelClassId")
+                        .HasConstraintName("FK__Seats__TravelCla__31B762FC");
+
+                    b.Navigation("TravelClass");
+                });
+
             modelBuilder.Entity("BookingSite.Domains.Models.Ticket", b =>
                 {
                     b.HasOne("BookingSite.Domains.Models.Booking", "Booking")
@@ -655,6 +710,10 @@ namespace BookingSite.Domains.Migrations
                         .WithMany("Tickets")
                         .HasForeignKey("MealId")
                         .HasConstraintName("FK__Tickets__MealId__42E1EEFE");
+
+                    b.HasOne("BookingSite.Domains.Models.Seat", null)
+                        .WithMany("Tickets")
+                        .HasForeignKey("SeatId");
 
                     b.Navigation("Booking");
 
@@ -722,6 +781,16 @@ namespace BookingSite.Domains.Migrations
                     b.Navigation("Flights");
 
                     b.Navigation("RouteSegments");
+                });
+
+            modelBuilder.Entity("BookingSite.Domains.Models.Seat", b =>
+                {
+                    b.Navigation("Tickets");
+                });
+
+            modelBuilder.Entity("BookingSite.Domains.Models.TravelClass", b =>
+                {
+                    b.Navigation("Seats");
                 });
 #pragma warning restore 612, 618
         }

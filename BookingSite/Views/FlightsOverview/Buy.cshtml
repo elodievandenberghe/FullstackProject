@@ -18,7 +18,7 @@
 <div>
     <!--Om de shopping cart te laten werken met een button, moeten we dit doen om een form aan te maken en dit te posten-->
     <form asp-action="AddToShoppingCart" method="post">
-        <input type="hidden" name="Date" value="@Model.FlightId" />
+        <input type="hidden" name="FlightId" value="@Model.FlightId" />
         <input type="hidden" name="Date" value="@Model.Date"/>
         <input type="hidden" name="FromAirport" value="@Model.FromAirport"/>
         <input type="hidden" name="ToAirport" value="@Model.ToAirport"/>
@@ -29,16 +29,16 @@
         <select asp-for="SelectedMeal" asp-items="@Model.Meals"></select>
 
         <p>Travel class: </p>
-        <select name="SelectedClass">
-            @foreach (TravelClassViewModel item in Model.Classes)
+        <select name="SelectedSeatClass">
+            @foreach (SeatClassViewModel item in Model.SeatClasses)
             {
                 @if (item.Available)
                 {
-                    <option value="@item.Id">@item.Type</option>
+                    <option value="@item.Id">@item.Name</option>
                 }
                 else
                 {
-                    <option value="@item.Id" disabled="disabled">@item.Type</option>
+                    <option value="@item.Id" disabled="disabled">@item.Name</option>
                 }
             }
         </select>
