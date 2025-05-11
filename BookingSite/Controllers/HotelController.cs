@@ -12,8 +12,9 @@ public class HotelController : Controller
 {
     private static HttpClient client = new HttpClient();
 
-    public IActionResult Index()
+    public async  Task<IActionResult> Index()
     {
+        await GetHotels(20088325);
         return View();
     }
 
@@ -28,19 +29,16 @@ public class HotelController : Controller
             Headers =
             {
                 { "x-rapidapi-host", "booking-com15.p.rapidapi.com" },
-                { "x-rapidapi-key", "random_api_key" }
+                { "x-rapidapi-key", "95516cd78cmshacb5723ea0358dcp1421cbjsn570caeee9830" }
             }
         };
 
         using (var response = await client.SendAsync(request))
         {
-            if (response.IsSuccessStatusCode)
-            {
-                var json = await response.Content.ReadAsStringAsync();
-                // Deserialize the JSON into your model
-                // hotels = JsonConvert.DeserializeObject<List<HotelViewModel>>(json);
-                // Assuming the API returns a list you can map
-            }
+            response.EnsureSuccessStatusCode();
+            var body = await response.Content.ReadAsStringAsync();
+            var result = JsonConvert.DeserializeObject<List<HotelViewModel>>(body);
+            Console.WriteLine(body);
         }
 
         return View(hotels);
