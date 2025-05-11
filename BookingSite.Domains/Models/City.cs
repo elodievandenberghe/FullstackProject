@@ -10,4 +10,5 @@ public partial class City
     public string? Name { get; set; }
 
     public virtual ICollection<Airport> Airports { get; set; } = new List<Airport>();
+    public int DestId { get; set; }
 }
