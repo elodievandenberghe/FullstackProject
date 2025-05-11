@@ -50,6 +50,10 @@ builder.Services.AddTransient<ITicketService, TicketService>();
 builder.Services.AddTransient<IPlaneDAO, PlaneDAO>();
 builder.Services.AddTransient<IPlaneService, PlaneService>();
 
+builder.Services.AddTransient<IDAO<Season, int>, SeasonsDAO>();
+builder.Services.AddTransient<ISeasonService, SeasonsService>();
+
+
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 
 builder.Services.AddTransient<IBookingDAO, BookingDAO>();

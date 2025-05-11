@@ -4,7 +4,7 @@ using BookingSite.Services.Interfaces;
 
 namespace BookingSite.Services;
 
-public class SeasonsService : IService<Season, int>
+public class SeasonsService : ISeasonService
 {
     private IDAO<Season, int> _seasonDAO;
 
@@ -31,6 +31,12 @@ public class SeasonsService : IService<Season, int>
     public async Task<IEnumerable<Season>?> GetAllAsync()
     {
         return await _seasonDAO.GetAllAsync();
+    }
+
+    public async Task<IEnumerable<Season>?> GetByAirportId(int airportId)
+    {
+        var seasons = await _seasonDAO.GetAllAsync();
+        return seasons?.Where(s => s.AirportId == airportId);
     }
 
     public async Task UpdateAsync(Season entity)

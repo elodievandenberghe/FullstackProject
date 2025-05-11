@@ -1,14 +1,16 @@
-using System.Diagnostics;
 using AutoMapper;
 using BookingSite.Domains.Models;
-using BookingSite.Services.Interfaces;
-using BookingSite.ViewModels;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using BookingSite.Extension;
+using BookingSite.Services;
+using BookingSite.Services.Interfaces;
 using BookingSite.Utils.DatabaseLogicFunctions;
 using BookingSite.Utils.Exceptions;
+using BookingSite.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.IdentityModel.Tokens;
+using System.Diagnostics;
 
 namespace BookingSite.Controllers;
 
@@ -16,18 +18,20 @@ public class FlightsOverviewController : Controller
 {
     private IService<Flight, int> _flightService;
     private IMealChoiceService _mealService;
+    private ISeasonService _seasonService;
     //private IService<TravelClass, int> _travelClassService;
     private FlightCapacityChecker _flightCapacityChecker;
     private ILogger<FlightsOverviewController> _logger;
 
     private readonly IMapper _mapper;
 
-    public FlightsOverviewController(IMapper mapper, IService<Flight, int> flightService, 
+    public FlightsOverviewController(IMapper mapper, IService<Flight, int> flightService, ISeasonService seasonService,
         IMealChoiceService mealService, ITicketService ticketService, ILogger<FlightsOverviewController> logger)
     {
         _mapper = mapper;
         _flightService = flightService;
         _mealService = mealService;
+        _seasonService = seasonService;
         //_travelClassService = travelServiceService;
         _flightCapacityChecker = new FlightCapacityChecker(flightService, ticketService);
         _logger = logger;
@@ -65,7 +69,7 @@ public class FlightsOverviewController : Controller
             Debug.WriteLine("errorlog" + ex.Message);
         }
 
-        return View(); 
+        return View();
     }
 
     [Authorize]
@@ -80,6 +84,125 @@ public class FlightsOverviewController : Controller
         return View(ticketOverviewVmViewModel);
     }
 
+    [HttpPost]
+    public async Task<IActionResult> CalculatePrices([FromBody] TicketPriceCalculationRequest request)
+    {
+        if (request == null || request.FlightId <= 0)
+        {
+            return BadRequest("Invalid request");
+        }
+
+        var flight = await _flightService.FindByIdAsync(request.FlightId);
+        if (flight == null)
+        {
+            return NotFound("Flight not found");
+        }
+
+        var response = new List<TicketPriceResponse>();
+
+        foreach (var ticket in request.Tickets)
+        {
+            var priceResponse = new TicketPriceResponse
+            {
+                BasePrice = flight.Route.Price
+            };
+
+            // Calculate class upgrade fee
+            if (!ticket.SeatClassId.IsNullOrEmpty() && Convert.ToInt32(ticket.SeatClassId) == (int)SeatClass.FirstClass)
+            {
+                priceResponse.Fees.Add(new PriceFee
+                {
+                    Title = "First Class",
+                    Value = flight.Route.Price * 0.5 // 50% additional for first class
+                });
+            }
+
+            // Check if flight date is in a special season
+            try
+            {
+                var seasons = await _seasonService.GetByAirportId(flight.Route.ToAirportId);
+                var currentSeason = seasons?.FirstOrDefault(s =>
+                    s.StartDate <= flight.Date && flight.Date <= s.EndDate);
+
+                if (currentSeason != null)
+                {
+                    var seasonFee = flight.Route.Price * (currentSeason.Percentage / 100);
+                    priceResponse.Fees.Add(new PriceFee
+                    {
+                        Title = "Season Fee",
+                        Value = seasonFee
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error calculating season fees");
+            }
+
+            // Add meal fee if applicable
+            /*if (ticket.MealId.HasValue && ticket.MealId > 0)
+            {
+                var meal = await _mealService.FindByIdAsync((int)ticket.MealId);
+                if (meal != null && meal.Price > 0)
+                {
+                    priceResponse.Fees.Add(new PriceFee
+                    {
+                        Title = $"Meal: {meal.Description}",
+                        Value = meal.Price
+                    });
+                }
+            }*/
+
+            response.Add(priceResponse);
+        }
+
+        return Json(response);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddToShoppingCart(MultiTicketPurchaseModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            var ticketOverviewVmViewModel = await GetTicketOverviewViewModelAsync(model.FlightId);
+            if (ticketOverviewVmViewModel == null)
+            {
+                return NotFound("Flight not found");
+            }
+
+            return View("Buy", ticketOverviewVmViewModel);
+        }
+
+        var flight = await _flightService.FindByIdAsync(model.FlightId);
+        if (flight == null)
+        {
+            return NotFound("Flight not found");
+        }
+
+        var shopping = HttpContext.Session.GetObject<CartModel>("ShoppingCart") ?? new CartModel();
+
+        foreach (var ticket in model.Tickets)
+        {
+            var selectedSeatClass = (SeatClass)Convert.ToInt32(ticket.SeatClass);
+            var price = flight.Route.Price * (selectedSeatClass == SeatClass.FirstClass ? 1.5 : 1.0);
+
+            var item = new CartItem()
+            {
+                FlightId = flight.Id,
+                MealId = Convert.ToInt32(ticket.Meal),
+                SeatClass = selectedSeatClass,
+                Price = price
+            };
+
+            shopping.Carts.Add(item);
+        }
+
+        HttpContext.Session.SetObject("ShoppingCart", shopping);
+        return RedirectToAction("Index", "Cart");
+    }
+
+    /* REMOVE SINGLE
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddToShoppingCart(TicketPurchaseInputModel ticketPurchaseInputModel)
@@ -121,6 +244,7 @@ public class FlightsOverviewController : Controller
 
         return RedirectToAction("Index", "Cart");
     }
+    */
 
     private async Task<TicketOverviewViewModel?> GetTicketOverviewViewModelAsync(int flightId)
     {

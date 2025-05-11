@@ -1,50 +1,292 @@
-@using BookingSite.ViewModels  
-@model BookingSite.ViewModels.TicketOverviewViewModel  
+@using BookingSite.ViewModels
+@model BookingSite.ViewModels.TicketOverviewViewModel
 
-<div>  
-    <p>From: <br/>  
-        @Model.FromAirport</p>   
-    <p>To: <br/>  
-        @Model.ToAirport</p>  
-    <p>Transfers: <br/>  
-        @Model.RouteSegments</p>  
-    <p>Date: <br/>  
-        @Model.Date</p>  
-    <p>Price: <br/>  
-        € @Model.Price</p>  
-    <p>Additional fees: </p>  
-</div>  
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Flight Details</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="flight-info">
+                        <h4>Journey</h4>
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flight-route">
+                                <h5 class="mb-0">@Model.FromAirport</h5>
+                                <small class="text-muted">Departure</small>
+                            </div>
+                            <div class="mx-3">
+                                <i class="bi bi-arrow-right"></i>
+                            </div>
+                            <div class="flight-route">
+                                <h5 class="mb-0">@Model.ToAirport</h5>
+                                <small class="text-muted">Arrival</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="flight-details">
+                        <h4>Details</h4>
+                        <p><i class="bi bi-calendar me-2"></i> <strong>Date:</strong> @Model.Date?.ToString("dddd, MMMM d, yyyy")</p>
+                        <p><i class="bi bi-currency-euro me-2"></i> <strong>Base Price:</strong> €@Model.Price</p>
+                        @if (Model.RouteSegments.Any())
+                        {
+                            <div>
+                                <i class="bi bi-geo-alt me-2"></i> <strong>Transfers:</strong>
+                                <ul class="list-unstyled ms-4">
+                                    @foreach (var segment in Model.RouteSegments)
+                                    {
+                                        <li><i class="bi bi-arrow-right-short"></i> @segment</li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<div>  
-    <form asp-action="AddToShoppingCart" method="post">  
-    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+    <div class="card shadow mt-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">Book Tickets</h3>
+            <button id="addTicket" class="btn btn-light"><i class="bi bi-plus"></i> Add Passenger</button>
+        </div>
+        <div class="card-body">
+            <form asp-action="AddToShoppingCart" method="post" id="bookingForm">
+                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                @Html.HiddenFor(m => m.FlightId)
 
-        @Html.HiddenFor(m => m.FlightId)
+                <div id="tickets-container">
+                    <div class="ticket-item card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Passenger 1</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Travel Class</label>
+                                    <select class="form-select seat-class-select" name="tickets[0].SeatClass">
+                                        @foreach (var item in Model.SeatClasses)
+                                        {
+                                            <option value="@item.Id" data-available="@item.Available">@item.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Meal Choice</label>
+                                    <select class="form-select meal-select" name="tickets[0].Meal">
+                                        <option value="">-- Select a meal --</option>
+                                        @foreach (var item in Model.Meals)
+                                        {
+                                            <option value="@item.Value">@item.Text</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="ticket-price-details mt-2">
+                                <h6>Price Details:</h6>
+                                <div class="price-breakdown"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-        <div>  
-        <label>Mealchoice:</label>
-            @Html.DropDownListFor(m => m.SelectedMeal, Model.Meals, "-- Select a meal --", new { @class = "form-control" })
-            @Html.ValidationMessageFor(m => m.SelectedMeal, "", new { @class = "text-danger" })
-        </div>  
-
-    <div>  
-        <label>Travel class:</label>
-            <select asp-for="SelectedSeatClass" class="form-control">
-                @foreach (var item in Model.SeatClasses)  
-            {  
-                if (item.Available)  
-                {  
-                    <option value="@item.Id">@item.Name</option>  
-                }  
-                else  
-                {  
-                    <option value="@item.Id" disabled>@item.Name</option>
-				}
-            }  
-        </select>
-            @Html.ValidationMessageFor(m => m.SelectedSeatClass, "", new { @class = "text-danger" })
-        </div>  
-
-    <button type="submit">Add to shopping cart</button>  
-</form>  
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4>Total Price Breakdown</h4>
+                                <div id="total-price-breakdown"></div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <h4>Total Price: <span class="text-primary" id="total-price">€@Model.Price</span></h4>
+                                <button type="submit" class="btn btn-primary btn-lg mt-3">
+                                    <i class="bi bi-cart-plus"></i> Add to Shopping Cart
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            let ticketCount = 1;
+            updateAllPrices();
+
+            // Add ticket button
+            $("#addTicket").click(function(e) {
+                e.preventDefault();
+                ticketCount++;
+
+                const newTicket = `
+                <div class="ticket-item card mb-4">
+                    <div class="card-header bg-light d-flex justify-content-between">
+                        <h5 class="mb-0">Passenger ${ticketCount}</h5>
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-ticket">
+                            <i class="bi bi-trash"></i> Remove
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Travel Class</label>
+                                <select class="form-select seat-class-select" name="tickets[${ticketCount-1}].SeatClass">
+                                    @foreach (var item in Model.SeatClasses)
+                                    {
+                                            <option value="@item.Id" data-available="@item.Available">@item.Name</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Meal Choice</label>
+                                <select class="form-select meal-select" name="tickets[${ticketCount-1}].Meal">
+                                    <option value="">-- Select a meal --</option>
+                                    @foreach (var item in Model.Meals)
+                                    {
+                                            <option value="@item.Value">@item.Text</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="ticket-price-details mt-2">
+                            <h6>Price Details:</h6>
+                            <div class="price-breakdown"></div>
+                        </div>
+                    </div>
+                </div>`;
+
+                $("#tickets-container").append(newTicket);
+                updateAllPrices();
+                bindRemoveTicketEvents();
+            });
+
+            // Bind remove ticket event
+            function bindRemoveTicketEvents() {
+                $(".remove-ticket").off("click").on("click", function() {
+                    $(this).closest(".ticket-item").remove();
+                    updateAllPrices();
+                });
+            }
+
+            // Event listeners for class and meal changes
+            $(document).on("change", ".seat-class-select, .meal-select", function() {
+                updateAllPrices();
+            });
+
+            // Update prices for all tickets
+            function updateAllPrices() {
+                const tickets = [];
+
+                $(".ticket-item").each(function(index) {
+                    const seatClassId = $(this).find(".seat-class-select").val();
+                    const mealId = $(this).find(".meal-select").val();
+
+                    tickets.push({
+                        seatClassId: seatClassId,
+                        mealId: mealId
+                    });
+                });
+
+                // AJAX call to get updated prices
+                $.ajax({
+                    url: "/FlightsOverview/CalculatePrices",
+                    type: "POST",
+                    data: JSON.stringify({
+                        flightId: @Model.FlightId,
+                        tickets: tickets
+                    }),
+                    contentType: "application/json",
+                    success: function(response) {
+                        updatePriceDisplay(response);
+                    },
+                    error: function(error) {
+                        console.error("Error calculating prices:", error);
+                    }
+                });
+            }
+
+            // Update the display with price information
+            function updatePriceDisplay(priceData) {
+                let totalPrice = 0;
+
+                // Update individual ticket prices
+                $(".ticket-item").each(function(index) {
+                    if (priceData[index]) {
+                        const ticketData = priceData[index];
+                        const breakdownElement = $(this).find(".price-breakdown");
+                        let breakdownHtml = `<div class="base-price">Base Price: €${ticketData.basePrice.toFixed(2)}</div>`;
+
+                        let ticketTotal = ticketData.basePrice;
+
+                        if (ticketData.fees && ticketData.fees.length > 0) {
+                            breakdownHtml += '<ul class="fee-list">';
+                            ticketData.fees.forEach(function(fee) {
+                                breakdownHtml += `<li>${fee.title}: €${fee.value.toFixed(2)}</li>`;
+                                ticketTotal += fee.value;
+                            });
+                            breakdownHtml += '</ul>';
+                        }
+
+                        breakdownHtml += `<div class="ticket-total">Ticket Total: €${ticketTotal.toFixed(2)}</div>`;
+                        breakdownElement.html(breakdownHtml);
+
+                        totalPrice += ticketTotal;
+                    }
+                });
+
+                // Update total price
+                $("#total-price").text(`€${totalPrice.toFixed(2)}`);
+
+                // Update total price breakdown
+                let totalBreakdownHtml = '';
+                priceData.forEach(function(ticketData, index) {
+                    let ticketTotal = ticketData.basePrice;
+                    ticketData.fees.forEach(fee => ticketTotal += fee.value);
+
+                    totalBreakdownHtml += `<div class="mb-2">Passenger ${index + 1}: €${ticketTotal.toFixed(2)}</div>`;
+                });
+
+                $("#total-price-breakdown").html(totalBreakdownHtml);
+            }
+
+            // Initialize remove ticket functionality
+            bindRemoveTicketEvents();
+        });
+    </script>
+}
+
+<style>
+    .flight-route {
+        text-align: center;
+    }
+
+    .price-breakdown {
+        padding-left: 10px;
+        border-left: 3px solid #e9ecef;
+    }
+
+    .fee-list {
+        list-style-type: none;
+        padding-left: 15px;
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+
+    .ticket-total {
+        font-weight: bold;
+        margin-top: 5px;
+    }
+
+    #total-price {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+</style>
