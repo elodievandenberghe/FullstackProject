@@ -1,9 +1,10 @@
-namespace BookingSite.ViewModels;
-
-public class CartViewModel
+﻿namespace BookingSite.ViewModels
 {
-    public List<CartItemViewModel>? Carts = new List<CartItemViewModel>();
+    public class CartViewModel
+    {
+        public List<CartItemViewModel>? Carts = new List<CartItemViewModel>();
 
-    public double ComputeTotalValue() =>
-        Carts.Sum(e => e.Price);
+        public double ComputeTotalValue() =>
+            Carts.Sum(e => e.Price);
+    }
 }
