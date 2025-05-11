@@ -17,7 +17,9 @@ public partial class Ticket
 
     public int? BookingId { get; set; }
 
-    public bool? IsCancelled { get; set; }
+    public bool IsCancelled { get; set; } = false;
+
+    public double? Price { get; set; }
 
     public virtual Flight? Flight { get; set; }
 
