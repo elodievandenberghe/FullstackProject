@@ -7,11 +7,11 @@ public partial class Airport
 {
     public int Id { get; set; }
 
-    public string? Name { get; set; }
+    public string Name { get; set; } = null!;
 
-    public int? CityId { get; set; }
+    public int CityId { get; set; }
 
-    public virtual City? City { get; set; }
+    public virtual City City { get; set; } = null!;
 
     public virtual ICollection<MealChoice> MealChoices { get; set; } = new List<MealChoice>();
 

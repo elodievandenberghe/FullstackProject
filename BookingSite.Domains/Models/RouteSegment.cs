@@ -7,13 +7,13 @@ public partial class RouteSegment
 {
     public int Id { get; set; }
 
-    public int? RouteId { get; set; }
+    public int RouteId { get; set; }
 
-    public int? SequenceNumber { get; set; }
+    public int SequenceNumber { get; set; }
 
-    public int? AirportId { get; set; }
+    public int AirportId { get; set; }
 
-    public virtual Airport? Airport { get; set; }
+    public virtual Airport Airport { get; set; } = null!;
 
-    public virtual Route? Route { get; set; }
+    public virtual Route Route { get; set; } = null!;
 }

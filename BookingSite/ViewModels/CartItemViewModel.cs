@@ -8,7 +8,7 @@ public class CartItemViewModel
     public DateOnly? Date { get; set; }
     public string FromAirport { get; set; }
     public string ToAirport { get; set; }
-    public string RouteSegments { get; set; }
+    public List<string> RouteSegments { get; set; }
     public int MealId { get; set; }
     public SeatClass SeatClass { get; set; }
     public double Price { get; set; }

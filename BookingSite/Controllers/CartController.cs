@@ -121,30 +121,33 @@ public class CartController : Controller
 
     public async Task<CartViewModel> GetList()
     {
-        CartViewModel? cartList = HttpContext.Session.GetObject<CartViewModel>("ShoppingCart");
+        CartModel? cartList = HttpContext.Session.GetObject<CartModel>("ShoppingCart");
+
         if (cartList == null)
         {
-            cartList = new CartViewModel();
+            cartList = new CartModel();
             HttpContext.Session.SetObject("ShoppingCart", cartList);
         }
-        foreach (var item in cartList.Carts)
+        var cartViewModel = new CartViewModel();
+        foreach (var cart in cartList.Carts)
         {
-            var mealDescription = await _mealService.FindByIdAsync(item.MealId);
+            var flight = await _flightService.FindByIdAsync(cart.FlightId);
+            var meal = await _mealService.FindByIdAsync(cart.MealId);
 
-            if (mealDescription != null)
+            cartViewModel.Carts.Add(new CartItemViewModel()
             {
-                item.MealDescription = mealDescription.Description;
-            }
-            else
-            {
-                item.MealDescription = "Unknown Meal";
-            }
-            // NOT NEEDED BECAUSE ENUM
-            //var classType = await _travelClassService.FindByIdAsync(item.ClassId);
-            //item.ClassType = classType.Type;
+                FlightId = cart.FlightId,
+                Date = flight.Date,
+                FromAirport = flight.Route.FromAirport.Name,
+                ToAirport = flight.Route.ToAirport.Name,
+                RouteSegments = flight.Route.RouteSegments.Select(s => s.Airport.Name).ToList(),
+                SeatClass = cart.SeatClass,
+                Price = cart.Price,
+                MealId = cart.MealId,
+                MealDescription = meal?.Description ?? "No meal selected",
+            });
         }
-
-        return cartList;
+        return cartViewModel;
     }
 }
 

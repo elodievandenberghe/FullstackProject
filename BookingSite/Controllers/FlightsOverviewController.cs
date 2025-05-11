@@ -18,17 +18,19 @@ public class FlightsOverviewController : Controller
     private IMealChoiceService _mealService;
     //private IService<TravelClass, int> _travelClassService;
     private FlightCapacityChecker _flightCapacityChecker;
+    private ILogger<FlightsOverviewController> _logger;
 
     private readonly IMapper _mapper;
 
     public FlightsOverviewController(IMapper mapper, IService<Flight, int> flightService, 
-        IMealChoiceService mealService, ITicketService ticketService)
+        IMealChoiceService mealService, ITicketService ticketService, ILogger<FlightsOverviewController> logger)
     {
         _mapper = mapper;
         _flightService = flightService;
         _mealService = mealService;
         //_travelClassService = travelServiceService;
         _flightCapacityChecker = new FlightCapacityChecker(flightService, ticketService);
+        _logger = logger;
     }
 
     [Authorize]
@@ -67,9 +69,67 @@ public class FlightsOverviewController : Controller
     }
 
     [Authorize]
-    public async Task<IActionResult> Buy(FlightViewModel flightViewModel)
+    public async Task<IActionResult> Buy(int id)
     {
-        var lstMealChoices = _mapper.Map<List<MealChoiceViewModel>>(await _mealService.GetByAirportId(flightViewModel.ToAirportId));
+        var ticketOverviewVmViewModel = await GetTicketOverviewViewModelAsync(id);
+        if (ticketOverviewVmViewModel == null)
+        {
+            return NotFound("Flight not found");
+        }
+
+        return View(ticketOverviewVmViewModel);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddToShoppingCart(TicketPurchaseInputModel ticketPurchaseInputModel)
+    {
+        if (!ModelState.IsValid)
+        {
+            var ticketOverviewVmViewModel = await GetTicketOverviewViewModelAsync(ticketPurchaseInputModel.FlightId);
+            if (ticketOverviewVmViewModel == null)
+            {
+                return NotFound("Flight not found");
+            }
+            ticketOverviewVmViewModel.SelectedMeal = ticketPurchaseInputModel.SelectedMeal;
+            ticketOverviewVmViewModel.SelectedSeatClass = ticketPurchaseInputModel.SelectedSeatClass;
+            return View("Buy", ticketOverviewVmViewModel);
+        }
+
+        var flight = await _flightService.FindByIdAsync(ticketPurchaseInputModel.FlightId);
+
+        if (flight == null)
+        {
+            return NotFound("Flight not found");
+        }
+
+        var selectedSeatClass = (SeatClass)Convert.ToInt32(ticketPurchaseInputModel.SelectedSeatClass);
+
+        var price = flight.Route.Price * (selectedSeatClass == SeatClass.FirstClass ? 1.5 : 1.0);
+
+        var item = new CartItem()
+        {
+            FlightId = flight.Id,
+            MealId = Convert.ToInt32(ticketPurchaseInputModel.SelectedMeal),
+            SeatClass = selectedSeatClass,
+            Price = price
+        };
+
+        var shopping = HttpContext.Session.GetObject<CartModel>("ShoppingCart") ?? new CartModel();
+        shopping.Carts.Add(item);
+        HttpContext.Session.SetObject("ShoppingCart", shopping);
+
+        return RedirectToAction("Index", "Cart");
+    }
+
+    private async Task<TicketOverviewViewModel?> GetTicketOverviewViewModelAsync(int flightId)
+    {
+        var flight = await _flightService.FindByIdAsync(flightId);
+        if (flight == null)
+        {
+            return null;
+        }
+        var lstMealChoices = _mapper.Map<List<MealChoiceViewModel>>(await _mealService.GetByAirportId(flight.Route.ToAirportId));
 
         // Create seat class options
         var seatClasses = new List<SeatClassViewModel>
@@ -80,7 +140,6 @@ public class FlightsOverviewController : Controller
 
         try
         {
-            var flight = await _flightService.FindByIdAsync(flightViewModel.Id);
             if (flight?.Plane == null)
             {
                 throw new NoPlaneAssignedException("No plane is assigned to this flight");
@@ -88,9 +147,9 @@ public class FlightsOverviewController : Controller
 
             // Check availability for each class
             var firstClassAvailable = await _flightCapacityChecker.CheckFlightAvailabilityByClass(
-                flightViewModel.Id, SeatClass.FirstClass);
+                flightId, SeatClass.FirstClass);
             var secondClassAvailable = await _flightCapacityChecker.CheckFlightAvailabilityByClass(
-                flightViewModel.Id, SeatClass.SecondClass);
+                flightId, SeatClass.SecondClass);
 
             // Update availability status
             seatClasses[0].Available = firstClassAvailable;
@@ -123,40 +182,15 @@ public class FlightsOverviewController : Controller
 
         var ticketOverviewVmViewModel = new TicketOverviewViewModel()
         {
-            FlightId = flightViewModel.Id,
-            FromAirport = flightViewModel.FromAirport,
-            ToAirport = flightViewModel.ToAirport,
-            RouteSegments = flightViewModel.RouteSegments,
-            Date = flightViewModel.Date,
+            FlightId = flight.Id,
+            FromAirport = flight.Route.FromAirport.Name,
+            ToAirport = flight.Route.ToAirport.Name,
+            RouteSegments = flight.Route.RouteSegments.OrderBy(o => o.SequenceNumber).Select(s => s.Airport.Name).ToList(),
+            Date = flight.Date,
             Meals = new SelectList(lstMealChoices, "Id", "Description"),
             SeatClasses = seatClasses.Where(c => c.Available).ToList(),
-            Price = flightViewModel.Price
+            Price = flight.Route.Price,
         };
-
-        return View(ticketOverviewVmViewModel);
-    }
-
-    [HttpPost]
-    public IActionResult AddToShoppingCart(TicketOverviewViewModel ticketOverview)
-    {
-        var selectedSeatClass = (SeatClass)Convert.ToInt32(ticketOverview.SelectedSeatClass);
-
-        var item = new CartItemViewModel()
-        {
-            FlightId = ticketOverview.FlightId,
-            Date = ticketOverview.Date,
-            FromAirport = ticketOverview.FromAirport,
-            ToAirport = ticketOverview.ToAirport,
-            RouteSegments = ticketOverview.RouteSegments,
-            MealId = Convert.ToInt32(ticketOverview.SelectedMeal),
-            SeatClass = selectedSeatClass,
-            Price = ticketOverview.Price * (selectedSeatClass == SeatClass.FirstClass ? 1.5 : 1.0) // Apply price adjustment for first class
-        };
-
-        var shopping = HttpContext.Session.GetObject<CartViewModel>("ShoppingCart") ?? new CartViewModel() { Carts = new List<CartItemViewModel>() };
-        shopping.Carts.Add(item);
-        HttpContext.Session.SetObject("ShoppingCart", shopping);
-
-        return RedirectToAction("Index", "Cart");
+        return ticketOverviewVmViewModel;
     }
 }
