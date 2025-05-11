@@ -81,4 +81,30 @@ public class FlightCapacityChecker
 
         return classCapacity - activeTicketsInClass;
     }
+
+    public async Task<(int firstClassSeats, int secondClassSeats)> GetRemainingSeats(int flightId, SeatClass seatClass)
+    {
+        var flight = await _flightService.FindByIdAsync(flightId);
+        if (flight?.Plane == null)
+        {
+            throw new NoPlaneAssignedException("No plane is assigned to this flight");
+        }
+
+        // Get the capacity for each class
+        int firstClassCapacity = flight.Plane.FirstClassCapacity;
+        int secondClassCapacity = flight.Plane.SecondClassCapacity;
+
+        // Get all booked tickets for this flight
+        var bookedTickets = await _ticketService.GetByFlightIdAsync(flightId);
+        if (bookedTickets == null)
+        {
+            return (firstClassCapacity, secondClassCapacity);
+        }
+
+        // Count tickets by class (excluding canceled tickets)
+        int bookedFirstClass = bookedTickets.Count(t => t.SeatClass == SeatClass.FirstClass && !t.IsCancelled);
+        int bookedSecondClass = bookedTickets.Count(t => t.SeatClass == SeatClass.SecondClass && !t.IsCancelled);
+
+        return (firstClassCapacity - bookedFirstClass, secondClassCapacity - bookedSecondClass);
+    }
 }

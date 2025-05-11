@@ -119,11 +119,55 @@
     <script>
         $(document).ready(function() {
             let ticketCount = 1;
-            updateAllPrices();
+            updateAllTickets();
 
             // Add ticket button
             $("#addTicket").click(function(e) {
                 e.preventDefault();
+
+                // Check availability before adding a new ticket
+                checkAvailabilityAndAddTicket();
+            });
+
+            // Check if there's capacity for another passenger before adding the ticket
+            function checkAvailabilityAndAddTicket() {
+                const tickets = collectTicketData();
+
+                // Add a temporary placeholder ticket to check if there's room for one more
+                const tempTicket = {
+                    seatClassId: "2", // Default to second class for checking
+                    mealId: null
+                };
+
+                // Make a copy of the tickets array and add the temporary ticket
+                const ticketsWithNew = [...tickets, tempTicket];
+
+                // Check availability with the temporary ticket
+                $.ajax({
+                    url: "/FlightsOverview/CalculateTickets",
+                    type: "POST",
+                    data: JSON.stringify({
+                        flightId: @Model.FlightId,
+                        tickets: ticketsWithNew
+                    }),
+                    contentType: "application/json",
+                    success: function(response) {
+                        // If the new ticket has any available classes, we can add it
+                        if (response[tickets.length] && response[tickets.length].availableClasses.length > 0) {
+                            addNewTicket();
+                        } else {
+                            showNoAvailabilityMessage();
+                        }
+                    },
+                    error: function(error) {
+                        console.error("Error checking availability:", error);
+                        showErrorMessage("Could not check seat availability");
+                    }
+                });
+            }
+
+            // Add a new ticket to the form
+            function addNewTicket() {
                 ticketCount++;
 
                 const newTicket = `
@@ -164,30 +208,63 @@
                 </div>`;
 
                 $("#tickets-container").append(newTicket);
-                updateAllPrices();
+                updateAllTickets();
                 bindRemoveTicketEvents();
-            });
+            }
+
+            // Show a message when no more seats are available
+            function showNoAvailabilityMessage() {
+                const alertHtml = `
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <strong>No more seats available!</strong> This flight doesn't have capacity for additional passengers.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>`;
+
+                // Insert the alert before the tickets container
+                $(alertHtml).insertBefore("#tickets-container").delay(5000).fadeOut(500);
+            }
+
+            // Show a generic error message
+            function showErrorMessage(message) {
+                const alertHtml = `
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Error!</strong> ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>`;
+
+                // Insert the alert before the tickets container
+                $(alertHtml).insertBefore("#tickets-container").delay(5000).fadeOut(500);
+            }
 
             // Bind remove ticket event
             function bindRemoveTicketEvents() {
                 $(".remove-ticket").off("click").on("click", function() {
                     $(this).closest(".ticket-item").remove();
-                    updateAllPrices();
+                    updateAllTickets();
+
+                    // Renumber the passengers after removal
+                    $(".ticket-item").each(function(idx) {
+                        $(this).find(".card-header h5").text(`Passenger ${idx + 1}`);
+
+                        // Update the name attributes for form submission
+                        $(this).find(".seat-class-select").attr("name", `tickets[${idx}].SeatClass`);
+                        $(this).find(".meal-select").attr("name", `tickets[${idx}].Meal`);
+                    });
                 });
             }
 
             // Event listeners for class and meal changes
             $(document).on("change", ".seat-class-select, .meal-select", function() {
-                updateAllPrices();
+                updateAllTickets();
             });
 
-            // Update prices for all tickets
-            function updateAllPrices() {
+            // Collect all ticket data from the form
+            function collectTicketData() {
                 const tickets = [];
 
                 $(".ticket-item").each(function(index) {
                     const seatClassId = $(this).find(".seat-class-select").val();
-                    const mealId = $(this).find(".meal-select").val();
+                    const mealId = $(this).find(".meal-select").val() || null; // Handle empty meal selection
 
                     tickets.push({
                         seatClassId: seatClassId,
@@ -195,9 +272,18 @@
                     });
                 });
 
-                // AJAX call to get updated prices
+                return tickets;
+            }
+
+            // Update tickets for all passengers
+            function updateAllTickets() {
+                const tickets = collectTicketData();
+
+                if (tickets.length === 0) return;
+
+                // AJAX call to get updated ticket information
                 $.ajax({
-                    url: "/FlightsOverview/CalculatePrices",
+                    url: "/FlightsOverview/CalculateTickets",
                     type: "POST",
                     data: JSON.stringify({
                         flightId: @Model.FlightId,
@@ -205,23 +291,35 @@
                     }),
                     contentType: "application/json",
                     success: function(response) {
-                        updatePriceDisplay(response);
+                        updateTicketDisplay(response);
                     },
                     error: function(error) {
-                        console.error("Error calculating prices:", error);
+                        console.error("Error calculating tickets:", error);
                     }
                 });
             }
 
-            // Update the display with price information
-            function updatePriceDisplay(priceData) {
+            // Update the display with ticket information
+            function updateTicketDisplay(ticketsData) {
                 let totalPrice = 0;
 
-                // Update individual ticket prices
+                // Update individual ticket information
                 $(".ticket-item").each(function(index) {
-                    if (priceData[index]) {
-                        const ticketData = priceData[index];
+                    if (ticketsData[index]) {
+                        const ticketData = ticketsData[index];
                         const breakdownElement = $(this).find(".price-breakdown");
+                        const classSelect = $(this).find(".seat-class-select");
+                        const mealSelect = $(this).find(".meal-select");
+
+                        // Update class select options based on availability
+                        updateClassOptions(classSelect, ticketData.availableClasses, ticketData.selectedClass);
+
+                        // Update meal selection if it came back from server
+                        if (ticketData.selectedMeal) {
+                            mealSelect.val(ticketData.selectedMeal);
+                        }
+
+                        // Display price breakdown
                         let breakdownHtml = `<div class="base-price">Base Price: €${ticketData.basePrice.toFixed(2)}</div>`;
 
                         let ticketTotal = ticketData.basePrice;
@@ -247,14 +345,67 @@
 
                 // Update total price breakdown
                 let totalBreakdownHtml = '';
-                priceData.forEach(function(ticketData, index) {
+                ticketsData.forEach(function(ticketData, index) {
                     let ticketTotal = ticketData.basePrice;
                     ticketData.fees.forEach(fee => ticketTotal += fee.value);
 
-                    totalBreakdownHtml += `<div class="mb-2">Passenger ${index + 1}: €${ticketTotal.toFixed(2)}</div>`;
+                    let seatClass = ticketData.selectedClass == 1 ? "First Class" : "Second Class";
+                    totalBreakdownHtml += `<div class="mb-2">Passenger ${index + 1} (${seatClass}): €${ticketTotal.toFixed(2)}</div>`;
                 });
 
                 $("#total-price-breakdown").html(totalBreakdownHtml);
+
+                // Check if form submission should be enabled
+                validateBookingForm(ticketsData);
+            }
+
+            // Validate the form to ensure all tickets have required fields
+            function validateBookingForm(ticketsData) {
+                let isValid = true;
+
+                // Check that each ticket has required selections
+                ticketsData.forEach(function(ticket) {
+                    if (!ticket.selectedMeal) {
+                        isValid = false;
+                    }
+                });
+
+                // Enable or disable submit button
+                $("button[type='submit']").prop("disabled", !isValid);
+
+                // Show or hide validation message
+                if (!isValid) {
+                    if ($("#meal-validation-msg").length === 0) {
+                        $("<div id='meal-validation-msg' class='alert alert-info mt-3'>" +
+                          "Please select a meal for all passengers before adding to cart</div>")
+                            .insertBefore("button[type='submit']");
+                    }
+                } else {
+                    $("#meal-validation-msg").remove();
+                }
+            }
+
+            // Update class options based on availability
+            function updateClassOptions(selectElement, availableClasses, selectedClass) {
+                // Save current selection
+                const currentVal = selectElement.val();
+
+                // Disable all options first
+                selectElement.find('option').prop('disabled', true);
+
+                // Enable only available options
+                if (availableClasses && availableClasses.length > 0) {
+                    availableClasses.forEach(function(classId) {
+                        selectElement.find(`option[value="${classId}"]`).prop('disabled', false);
+                    });
+                }
+
+                // Set the selected class
+                if (availableClasses && availableClasses.includes(parseInt(currentVal))) {
+                    selectElement.val(currentVal);
+                } else if (selectedClass) {
+                    selectElement.val(selectedClass);
+                }
             }
 
             // Initialize remove ticket functionality
@@ -262,6 +413,7 @@
         });
     </script>
 }
+
 
 <style>
     .flight-route {
@@ -288,5 +440,11 @@
     #total-price {
         font-size: 1.5rem;
         font-weight: bold;
+    }
+
+    /* Disabled option styling */
+    option:disabled {
+        color: #aaa;
+        font-style: italic;
     }
 </style>

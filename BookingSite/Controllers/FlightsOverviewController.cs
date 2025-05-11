@@ -19,6 +19,7 @@ public class FlightsOverviewController : Controller
     private IService<Flight, int> _flightService;
     private IMealChoiceService _mealService;
     private ISeasonService _seasonService;
+    private ITicketService _ticketService;
     //private IService<TravelClass, int> _travelClassService;
     private FlightCapacityChecker _flightCapacityChecker;
     private ILogger<FlightsOverviewController> _logger;
@@ -33,6 +34,7 @@ public class FlightsOverviewController : Controller
         _mealService = mealService;
         _seasonService = seasonService;
         //_travelClassService = travelServiceService;
+        _ticketService = ticketService;
         _flightCapacityChecker = new FlightCapacityChecker(flightService, ticketService);
         _logger = logger;
     }
@@ -85,7 +87,7 @@ public class FlightsOverviewController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> CalculatePrices([FromBody] TicketPriceCalculationRequest request)
+    public async Task<IActionResult> CalculateTickets([FromBody] TicketCalculationRequest request)
     {
         if (request == null || request.FlightId <= 0)
         {
@@ -98,65 +100,161 @@ public class FlightsOverviewController : Controller
             return NotFound("Flight not found");
         }
 
-        var response = new List<TicketPriceResponse>();
+        // Get the total capacity for each class
+        int firstClassCapacity = 0;
+        int secondClassCapacity = 0;
 
-        foreach (var ticket in request.Tickets)
+        try
         {
-            var priceResponse = new TicketPriceResponse
+            if (flight?.Plane == null)
             {
-                BasePrice = flight.Route.Price
-            };
-
-            // Calculate class upgrade fee
-            if (!ticket.SeatClassId.IsNullOrEmpty() && Convert.ToInt32(ticket.SeatClassId) == (int)SeatClass.FirstClass)
-            {
-                priceResponse.Fees.Add(new PriceFee
-                {
-                    Title = "First Class",
-                    Value = flight.Route.Price * 0.5 // 50% additional for first class
-                });
+                throw new NoPlaneAssignedException("No plane is assigned to this flight");
             }
 
-            // Check if flight date is in a special season
-            try
-            {
-                var seasons = await _seasonService.GetByAirportId(flight.Route.ToAirportId);
-                var currentSeason = seasons?.FirstOrDefault(s =>
-                    s.StartDate <= flight.Date && flight.Date <= s.EndDate);
+            firstClassCapacity = flight.Plane.FirstClassCapacity;
+            secondClassCapacity = flight.Plane.SecondClassCapacity;
 
-                if (currentSeason != null)
+            // Get already booked seats (excluding tickets in the current request)
+            var bookedTickets = await _ticketService.GetByFlightIdAsync(request.FlightId);
+
+            if (bookedTickets != null)
+            {
+                // Count already booked seats by class (excluding canceled tickets)
+                int bookedFirstClass = bookedTickets.Count(t => t.SeatClass == SeatClass.FirstClass && !t.IsCancelled);
+                int bookedSecondClass = bookedTickets.Count(t => t.SeatClass == SeatClass.SecondClass && !t.IsCancelled);
+
+                // Calculate remaining seats
+                int remainingFirstClass = firstClassCapacity - bookedFirstClass;
+                int remainingSecondClass = secondClassCapacity - bookedSecondClass;
+
+                // Calculate how many first class seats are already selected in this request
+                int requestedFirstClassSeats = request.Tickets
+                    .Count(t => !t.SeatClassId.IsNullOrEmpty() && Convert.ToInt32(t.SeatClassId) == (int)SeatClass.FirstClass);
+
+                // Check if classes are available
+                bool firstClassAvailable = remainingFirstClass > 0;
+                bool secondClassAvailable = remainingSecondClass > 0;
+
+                var response = new List<TicketCalculationResponse>();
+                int currentFirstClassCount = 0;
+
+                foreach (var ticket in request.Tickets)
                 {
-                    var seasonFee = flight.Route.Price * (currentSeason.Percentage / 100);
-                    priceResponse.Fees.Add(new PriceFee
+                    // Current selected class (default to second class if not specified)
+                    int selectedClass = !ticket.SeatClassId.IsNullOrEmpty()
+                        ? Convert.ToInt32(ticket.SeatClassId)
+                        : (int)SeatClass.SecondClass;
+
+                    // Check if the selected class is first class and if we still have capacity
+                    if (selectedClass == (int)SeatClass.FirstClass)
                     {
-                        Title = "Season Fee",
-                        Value = seasonFee
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error calculating season fees");
-            }
+                        if (currentFirstClassCount >= remainingFirstClass)
+                        {
+                            // No more first class seats, force to second class
+                            selectedClass = (int)SeatClass.SecondClass;
+                        }
+                        else
+                        {
+                            // Count this ticket against first class capacity
+                            currentFirstClassCount++;
+                        }
+                    }
 
-            // Add meal fee if applicable
-            /*if (ticket.MealId.HasValue && ticket.MealId > 0)
-            {
-                var meal = await _mealService.FindByIdAsync((int)ticket.MealId);
-                if (meal != null && meal.Price > 0)
-                {
-                    priceResponse.Fees.Add(new PriceFee
+                    // Calculate available classes for this ticket
+                    var availableClasses = new List<int>();
+
+                    // First class is available if we haven't allocated all remaining seats yet
+                    if (firstClassAvailable && (currentFirstClassCount < remainingFirstClass))
                     {
-                        Title = $"Meal: {meal.Description}",
-                        Value = meal.Price
-                    });
-                }
-            }*/
+                        availableClasses.Add((int)SeatClass.FirstClass);
+                    }
 
-            response.Add(priceResponse);
+                    // Second class is always available if there's capacity
+                    if (secondClassAvailable)
+                    {
+                        availableClasses.Add((int)SeatClass.SecondClass);
+                    }
+
+                    var ticketResponse = new TicketCalculationResponse
+                    {
+                        BasePrice = flight.Route.Price,
+                        SelectedMeal = ticket.MealId,
+                        SelectedClass = selectedClass,
+                        AvailableClasses = availableClasses
+                    };
+
+                    // Calculate class upgrade fee
+                    if (selectedClass == (int)SeatClass.FirstClass)
+                    {
+                        ticketResponse.Fees.Add(new PriceFee
+                        {
+                            Title = "First Class",
+                            Value = flight.Route.Price * 0.5 // 50% additional for first class
+                        });
+                    }
+
+                    // Check if flight date is in a special season
+                    try
+                    {
+                        var seasons = await _seasonService.GetByAirportId(flight.Route.ToAirportId);
+                        var currentSeason = seasons?.FirstOrDefault(s =>
+                            s.StartDate <= flight.Date && flight.Date <= s.EndDate);
+
+                        if (currentSeason != null)
+                        {
+                            var seasonFee = flight.Route.Price * (currentSeason.Percentage / 100);
+                            ticketResponse.Fees.Add(new PriceFee
+                            {
+                                Title = "Season Fee",
+                                Value = seasonFee
+                            });
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error calculating season fees");
+                    }
+
+                    /*/ Add meal fee if applicable
+                    if (ticket.MealId.HasValue && ticket.MealId > 0)
+                    {
+                        var meal = await _mealService.FindByIdAsync((int)ticket.MealId);
+                        if (meal != null && meal.Price > 0)
+                        {
+                            ticketResponse.Fees.Add(new PriceFee
+                            {
+                                Title = $"Meal: {meal.Description}",
+                                Value = meal.Price
+                            });
+                        }
+                    }*/
+
+                    response.Add(ticketResponse);
+                }
+
+                return Json(response);
+            }
+        }
+        catch (NoPlaneAssignedException)
+        {
+            // Return response with no available classes
+            var errorResponse = request.Tickets.Select(_ => new TicketCalculationResponse
+            {
+                BasePrice = flight.Route.Price,
+                AvailableClasses = new List<int>(),
+                Fees = new List<PriceFee> { new PriceFee { Title = "Error", Value = 0 } }
+            }).ToList();
+
+            return Json(errorResponse);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error calculating tickets");
+            return StatusCode(500, "An error occurred while calculating tickets");
         }
 
-        return Json(response);
+        // Fallback empty response if we get here somehow
+        return Json(new List<TicketCalculationResponse>());
     }
 
     [HttpPost]
