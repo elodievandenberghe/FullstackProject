@@ -7,6 +7,8 @@ using BookingSite.Repositories.Interfaces;
 using BookingSite.Services;
 using BookingSite.Services.Interfaces;
 using BookingSite.Utils;
+using BookingSite.ViewModels;
+using BookingSite.ViewModels.Interface;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.OpenApi.Models;
 
@@ -54,6 +56,8 @@ builder.Services.AddTransient<IEmailSender, EmailSender>();
 
 builder.Services.AddTransient<IBookingDAO, BookingDAO>();
 builder.Services.AddTransient<IBookingService, BookingService>();
+
+
 
 builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration);
 

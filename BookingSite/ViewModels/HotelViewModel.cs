@@ -1,14 +1,15 @@
 using System.Text.Json.Serialization;
 using BookingSite.Domains.Models;
+using BookingSite.ViewModels.Interface;
 using Newtonsoft.Json;
 
 namespace BookingSite.ViewModels;
 
-
-public class RootObject
+[Serializable]
+public class RootObject<T> : IRootObject<T>
 {
     [JsonProperty("data")]
-    public List<HotelViewModel> Data { get; set; }
+    public List<T> Data { get; set; }
 }
 
 public class HotelViewModel
@@ -27,6 +28,9 @@ public class HotelViewModel
 
     [JsonProperty("address_obj")]
     public AddressObject Address { get; set; }  // FIXED: should be a single object, not a list
+    
+    public string? ImageUrl { get; set; }
+    public string? WebUrl { get; set; }
 }
 
 

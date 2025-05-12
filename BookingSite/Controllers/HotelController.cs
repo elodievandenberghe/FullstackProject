@@ -9,6 +9,7 @@ using BookingSite.Data;
 using BookingSite.Repositories.Interfaces;
 using BookingSite.Services.Interfaces;
 using BookingSite.ViewModels;
+using BookingSite.ViewModels.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 
@@ -23,6 +24,7 @@ public class HotelController : Controller
 
     public HotelController(IBookingService bookingService, UserManager<ApplicationUser> userManager)
     {
+        _client.BaseAddress = new Uri("https://api.content.tripadvisor.com/api/v1");
         _userManager = userManager;
         _bookingService = bookingService;
     }
@@ -32,37 +34,33 @@ public class HotelController : Controller
     {
         var value = await _bookingService.GetCityLattitudeLongitudeOfLastBookedTicketsAsync(User.FindFirstValue(ClaimTypes.NameIdentifier));
         Console.WriteLine(value);
-        List<RootObject> values = new List<RootObject>();
-
+        List<IRootObject<HotelViewModel>> data = new List<IRootObject<HotelViewModel>>();
         foreach (var item in value)
         {
-            values.Add(await GetHotels(item));
+          data.Add(await MakeApiRequest<HotelViewModel>($"location/search?key=34B9C74963ED491BBC3D7A5817EF2814&searchQuery=hotel&latLong={item}&language=en"));
         }
-        
-        return View(values);
+        return View(data);
     }
+    
 
-    public async Task<RootObject> GetHotels(string latlong)
+    public async Task<IRootObject<T>> MakeApiRequest<T>(string endpoint)
     {
-        List<HotelViewModel> hotels = new List<HotelViewModel>();
-        latlong = latlong.Replace(",", "%2C%20");
-        Console.WriteLine(latlong);
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
-            RequestUri = new Uri($"https://api.content.tripadvisor.com/api/v1/location/search?key=34B9C74963ED491BBC3D7A5817EF2814&searchQuery=hotel&latLong={latlong}&language=en"),
-            Headers =
-            {
-                { "accept", "application/json" }
-            }
+            RequestUri = new Uri($"{_client.BaseAddress}/{endpoint}"),
+            Headers = { { "accept", "application/json" } }
         };
 
         using (var response = await _client.SendAsync(request))
         {
             response.EnsureSuccessStatusCode();
             var body = await response.Content.ReadAsStringAsync();
-            var result = JsonConvert.DeserializeObject<RootObject>(body);
+            
+            var settings = new JsonSerializerSettings{ TypeNameHandling = TypeNameHandling.Auto };
+            var result = JsonConvert.DeserializeObject<RootObject<T>>(body, settings);
             return result;
         }
     }
+
 }
