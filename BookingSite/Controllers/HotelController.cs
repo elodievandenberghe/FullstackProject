@@ -20,6 +20,27 @@ public class HotelController : Controller
 
     public async Task<IActionResult> GetHotels(int destId)
     {
-        return View();
+        List<HotelViewModel> hotels = new List<HotelViewModel>();
+
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Get,
+            RequestUri = new Uri($"https://api.makcorps.com/mapping"),
+            Headers =
+            {
+                { "x-rapidapi-host", "booking-com15.p.rapidapi.com" },
+                { "x-rapidapi-key", "95516cd78cmshacb5723ea0358dcp1421cbjsn570caeee9830" }
+            }
+        };
+
+        using (var response = await client.SendAsync(request))
+        {
+            response.EnsureSuccessStatusCode();
+            var body = await response.Content.ReadAsStringAsync();
+            var result = JsonConvert.DeserializeObject<List<HotelViewModel>>(body);
+            Console.WriteLine(body);
+        }
+
+        return View(hotels);
     }
 }
