@@ -1,0 +1,12 @@
+@using BookingSite.ViewModels
+@model BookingSite.ViewModels.RootObject
+
+@foreach (var item in Model.Data)
+{
+    <p>
+        @item.Name
+    </p>
+    <p>
+        @item.Address.AddressString
+    </p>
+}

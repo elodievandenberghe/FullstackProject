@@ -14,22 +14,21 @@ public class HotelController : Controller
 
     public async  Task<IActionResult> Index()
     {
-        await GetHotels(20088325);
-        return View();
+        return View(await GetHotels("40.71427000,-74.00597000"));
     }
 
-    public async Task<IActionResult> GetHotels(int destId)
+    public async Task<RootObject> GetHotels(string latlong)
     {
         List<HotelViewModel> hotels = new List<HotelViewModel>();
-
+        latlong = latlong.Replace(",", "%2C%20");
+        Console.WriteLine(latlong);
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
-            RequestUri = new Uri($"https://api.makcorps.com/mapping"),
+            RequestUri = new Uri($"https://api.content.tripadvisor.com/api/v1/location/search?key=34B9C74963ED491BBC3D7A5817EF2814&searchQuery=hotel&latLong={latlong}&language=en"),
             Headers =
             {
-                { "x-rapidapi-host", "booking-com15.p.rapidapi.com" },
-                { "x-rapidapi-key", "95516cd78cmshacb5723ea0358dcp1421cbjsn570caeee9830" }
+                { "accept", "application/json" }
             }
         };
 
@@ -37,10 +36,8 @@ public class HotelController : Controller
         {
             response.EnsureSuccessStatusCode();
             var body = await response.Content.ReadAsStringAsync();
-            var result = JsonConvert.DeserializeObject<List<HotelViewModel>>(body);
-            Console.WriteLine(body);
+            var result = JsonConvert.DeserializeObject<RootObject>(body);
+            return result;
         }
-
-        return View(hotels);
     }
 }
