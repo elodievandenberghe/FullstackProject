@@ -4,17 +4,42 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Security.Claims;
+using BookingSite.Data;
+using BookingSite.Repositories.Interfaces;
+using BookingSite.Services.Interfaces;
 using BookingSite.ViewModels;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 
 namespace BookingSite.Controllers;
 
 public class HotelController : Controller
 {
-    private static HttpClient client = new HttpClient();
+    private static HttpClient _client = new HttpClient();
+    private IBookingService _bookingService;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public async  Task<IActionResult> Index()
+
+    public HotelController(IBookingService bookingService, UserManager<ApplicationUser> userManager)
     {
-        return View(await GetHotels("40.71427000,-74.00597000"));
+        _userManager = userManager;
+        _bookingService = bookingService;
+    }
+
+    [Authorize]
+    public async Task<IActionResult> Index()
+    {
+        var value = await _bookingService.GetCityLattitudeLongitudeOfLastBookedTicketsAsync(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        Console.WriteLine(value);
+        List<RootObject> values = new List<RootObject>();
+
+        foreach (var item in value)
+        {
+            values.Add(await GetHotels(item));
+        }
+        
+        return View(values);
     }
 
     public async Task<RootObject> GetHotels(string latlong)
@@ -32,7 +57,7 @@ public class HotelController : Controller
             }
         };
 
-        using (var response = await client.SendAsync(request))
+        using (var response = await _client.SendAsync(request))
         {
             response.EnsureSuccessStatusCode();
             var body = await response.Content.ReadAsStringAsync();

@@ -42,4 +42,8 @@ public class BookingService : IBookingService
     {
         await _bookingDAO.UpdateAsync(entity);
     }
+    public async Task<IEnumerable<String>?> GetCityLattitudeLongitudeOfLastBookedTicketsAsync(string userId)
+    {
+        return await _bookingDAO.GetCityLattitudeLongitudeOfLastBookedTicketsAsync(userId);
+    }
 }
