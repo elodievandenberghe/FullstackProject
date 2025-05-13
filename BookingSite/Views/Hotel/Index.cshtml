@@ -1,8 +1,6 @@
-@model List<BookingSite.ViewModels.Interface.IRootObject<BookingSite.ViewModels.HotelViewModel>>
+@model List<BookingSite.ViewModels.HotelViewModel>
 
-@foreach (var item in Model)
-{
-    foreach (var hotel in item.Data)
+    @foreach (var hotel in Model)
     {
         <p>@hotel.Name</p>
         <p>@hotel.Address.AddressString</p>
@@ -10,4 +8,3 @@
         <a href="@hotel.WebUrl">Book your room!</a>
         <p>--------------------------------------------<br/></p>
     }
-}

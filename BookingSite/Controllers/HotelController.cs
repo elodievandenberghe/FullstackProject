@@ -24,7 +24,10 @@ public class HotelController : Controller
 
     public HotelController(IBookingService bookingService, UserManager<ApplicationUser> userManager)
     {
-        _client.BaseAddress = new Uri("https://api.content.tripadvisor.com/api/v1");
+        if (_client.BaseAddress == null)
+        {
+            _client.BaseAddress = new Uri("https://api.content.tripadvisor.com/api/v1");
+        }
         _userManager = userManager;
         _bookingService = bookingService;
     }
@@ -33,26 +36,28 @@ public class HotelController : Controller
     public async Task<IActionResult> Index()
     {
         var value = await _bookingService.GetCityLattitudeLongitudeOfLastBookedTicketsAsync(User.FindFirstValue(ClaimTypes.NameIdentifier));
-        List<IRootObject<HotelViewModel>> data = new List<IRootObject<HotelViewModel>>();
+        List<HotelViewModel> data = new List<HotelViewModel>();
+        
         foreach (var item in value)
         {
-           data.Add(await MakeApiRequest<HotelViewModel>($"location/search?key=34B9C74963ED491BBC3D7A5817EF2814&searchQuery=hotel&latLong={item}&language=en"));
+           var response = await MakeApiRequest<HotelViewModel>($"location/search?key=34B9C74963ED491BBC3D7A5817EF2814&searchQuery=hotel&latLong={item}&language=en");
+           data.AddRange(response.Data.Select(d => d).Take(3).ToList());
         }
-
+        Console.WriteLine(data);
         foreach (var item in data)
         {
-            foreach (var hotel in item.Data)
-            {
-                var imageurl = await MakeApiRequest<HotelImageViewModel>(
-                    $"location/{hotel.LocationId}/photos?language=en&key=34B9C74963ED491BBC3D7A5817EF2814");
+            var imageurl = MakeApiRequest<HotelImageViewModel>(
+                $"location/{item.LocationId}/photos?language=en&key=34B9C74963ED491BBC3D7A5817EF2814");
             
-                hotel.ImageUrl = imageurl?.Data?[0]?.Images?.Original?.Url ?? null;
 
-                var weburl = await ViewInfo(
-                    $"location/{hotel.LocationId}/details?&key=34B9C74963ED491BBC3D7A5817EF2814");
-                hotel.WebUrl = weburl.WebUrl ?? null; 
-            }
+            var weburl = ViewInfo(
+                $"location/{item.LocationId}/details?&key=34B9C74963ED491BBC3D7A5817EF2814");
+                
+            await Task.WhenAll(imageurl, weburl);
+            item.ImageUrl = imageurl?.Result.Data?[0]?.Images?.Original?.Url ?? null;
+            item.WebUrl = weburl.Result.WebUrl ?? null; 
         }
+
         return View(data);
     }
     
