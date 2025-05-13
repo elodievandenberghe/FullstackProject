@@ -7,7 +7,6 @@
     ViewData["Title"] = Localizer["Title"];
 }
 @{
-    // Represents the feature that provides the current request's culture information. (zie cookie culture wordt uitgelezen als deze aanwwezig) is)
     var currentRequestCulture = Context.Features.Get<IRequestCultureFeature>();
     var cultureItems = locOptions.Value.SupportedUICultures
         .Select(c => new SelectListItem { Value = c.Name, Text = c.DisplayName })
@@ -27,6 +26,7 @@
                 asp-for="@currentRequestCulture.RequestCulture.UICulture.Name"
                 asp-items="cultureItems">
         </select>
+        <button formmethod="post">Select</button>
     </form>
 </div>
 
