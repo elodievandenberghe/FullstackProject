@@ -86,20 +86,20 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "My API Employee",
+        Title = "My API",
         Version = "version 1",
-        Description = "An API to perform Employee operations",
+        Description = "Our api",
         TermsOfService = new Uri("https://example.com/terms"),
         Contact = new OpenApiContact
         {
-            Name = "CDW",
-            Email = "christophe.dewaele@vives.be",
+            Name = "EV",
+            Email = "elodie.vandenberghe@outlook.com",
             Url = new Uri("https://vives.be"),
         },
         License = new OpenApiLicense
         {
-            Name = "Employee API LICX",
-            Url = new Uri("https://example.com/license"),
+            Name = "GPL",
+            Url = new Uri("https://www.gnu.org/licenses/gpl-3.0.en.html"),
         }
     });
 });
