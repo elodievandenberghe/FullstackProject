@@ -9,7 +9,7 @@ namespace BookingSite.ViewModels;
 public class RootObject<T> : IRootObject<T>
 {
     [JsonProperty("data")]
-    public List<T> Data { get; set; }
+    public List<T>? Data { get; set; }
 }
 
 public class HotelViewModel
@@ -27,7 +27,7 @@ public class HotelViewModel
     public string? Bearing { get; set; }
 
     [JsonProperty("address_obj")]
-    public AddressObject Address { get; set; }  // FIXED: should be a single object, not a list
+    public AddressObject? Address { get; set; }  
     
     public string? ImageUrl { get; set; }
     public string? WebUrl { get; set; }

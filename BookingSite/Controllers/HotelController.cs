@@ -37,8 +37,25 @@ public class HotelController : Controller
         List<IRootObject<HotelViewModel>> data = new List<IRootObject<HotelViewModel>>();
         foreach (var item in value)
         {
-          data.Add(await MakeApiRequest<HotelViewModel>($"location/search?key=34B9C74963ED491BBC3D7A5817EF2814&searchQuery=hotel&latLong={item}&language=en"));
+           data.Add(await MakeApiRequest<HotelViewModel>($"location/search?key=34B9C74963ED491BBC3D7A5817EF2814&searchQuery=hotel&latLong={item}&language=en"));
         }
+
+        foreach (var item in data)
+        {
+            foreach (var hotel in item.Data)
+            {
+                var imageurl = await MakeApiRequest<HotelImageViewModel>(
+                    $"location/{hotel.LocationId}/photos?language=en&key=34B9C74963ED491BBC3D7A5817EF2814");
+                if (imageurl.Data[0].Images.Original == null)
+                {
+                    Console.WriteLine(hotel.LocationId);
+                }   
+                Console.WriteLine(imageurl.Data[0].Images.Original);
+                var url = imageurl.Data[0].Images.Original.Url;
+                hotel.ImageUrl = url;
+            }
+        }
+
         return View(data);
     }
     
