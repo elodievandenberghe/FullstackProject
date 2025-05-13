@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using BookingSite.Data;
 using BookingSite.Domains.DatabaseContext;
@@ -10,9 +11,27 @@ using BookingSite.Utils;
 using BookingSite.ViewModels;
 using BookingSite.ViewModels.Interface;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddLocalization(
+    options => options.ResourcesPath = "Resources"
+);
+var supportedCultures = new[] { "nl", "en", "fr" };
+
+builder.Services.Configure<RequestLocalizationOptions>(options => {
+    options.SetDefaultCulture(supportedCultures[0])
+        .AddSupportedCultures(supportedCultures)  
+        .AddSupportedUICultures(supportedCultures); 
+});
+
+builder.Services.AddControllersWithViews()
+    .AddViewLocalization()
+    .AddDataAnnotationsLocalization();
+
 
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddRazorPages(); 
@@ -125,5 +144,10 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=FlightsOverview}/{action=Index}/{id?}");
 app.MapRazorPages();
+var localizationOptions = new RequestLocalizationOptions()
+    .SetDefaultCulture(supportedCultures[0])
+    .AddSupportedCultures(supportedCultures)
+    .AddSupportedUICultures(supportedCultures);
 
+app.UseRequestLocalization(localizationOptions);
 app.Run();
