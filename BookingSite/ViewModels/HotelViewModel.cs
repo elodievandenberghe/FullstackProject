@@ -9,7 +9,7 @@ namespace BookingSite.ViewModels;
 public class RootObject<T> : IRootObject<T>
 {
     [JsonProperty("data")]
-    public List<T>? Data { get; set; }
+    public List<T> Data { get; set; }
 }
 
 public class HotelViewModel

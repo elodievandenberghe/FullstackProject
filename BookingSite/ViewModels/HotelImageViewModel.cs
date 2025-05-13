@@ -6,7 +6,7 @@ namespace BookingSite.ViewModels;
 public class RootHotelImageObject : IRootObject<HotelImageViewModel>
 {
     [JsonProperty("data")]
-    public List<HotelImageViewModel>? Data { get; set; }
+    public List<HotelImageViewModel> Data { get; set; }
 }
 
 public class HotelImageViewModel
@@ -21,7 +21,7 @@ public class HotelImageViewModel
     public string? PublishedDate { get; set; }
 
     [JsonProperty("images")]
-    public ImageSizes? Images { get; set; }
+    public ImageSizes Images { get; set; }
 
     // Optional extra properties if needed
     [JsonProperty("caption")]
