@@ -1,61 +1,166 @@
-@model IEnumerable<BookingSite.ViewModels.FlightViewModel>
+@model BookingSite.ViewModels.FlightsOverviewViewModel
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Flights Overview";
 }
 
+<div class="container">
+    <h1 class="my-4">Available Flights</h1>
 
-<h1>Index</h1>
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Filter Flights</h5>
+                    <form id="filterForm" method="get" class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label for="fromAirportId" class="form-label">Departure Airport</label>
+                            <select class="form-select" id="fromAirportId" name="fromAirportId" asp-items="Model.Airports">
+                                <option value="">-- All Departure Airports --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="toAirportId" class="form-label">Arrival Airport</label>
+                            <select class="form-select" id="toAirportId" name="toAirportId" asp-items="Model.Airports">
+                                <option value="">-- All Arrival Airports --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="departureDate" class="form-label">Departure Date</label>
+                            <input type="date" class="form-control" id="departureDate" name="departureDate"
+                                   min="@DateTime.Today.AddDays(3).ToString("yyyy-MM-dd")"
+                                   max="@DateTime.Today.AddMonths(6).ToString("yyyy-MM-dd")"
+                                   value="@(Model.DepartureDate?.ToString("yyyy-MM-dd"))">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary w-100">Search</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
-@if (Model != null)
-{
-    <table class="table" id="myTable">
-        <thead>
-        <tr>
-            <th>
-                From 
-            </th>
-            <th>
-                To
-            </th>
-            <th>
-                Transfers
-            </th>
-            <th>
-                Date
-            </th>
-            <th>
-                Price
-            </th>
-            <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>
-                    @Html.DisplayFor(modelItem => item.FromAirport)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.ToAirport)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.RouteSegments)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Date)
-                </td>
-                <td>
-                  € @Html.DisplayFor(modelItem => item.Price)
-                </td>
-                <td>
-                    @Html.ActionLink("Buy your ticket", "Buy", new{item.Id}) 
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
-}else{
-    <p>no Data</p>
+    @if (!Model.Flights.Any())
+    {
+        <div class="alert alert-info" role="alert">
+            No flights found for your search criteria. Please try different filters.
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>From</th>
+                                <th>To</th>
+                                <th>Date</th>
+                                @*<th>Time</th>*@
+                                <th>Available Seats</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var flight in Model.Flights)
+                            {
+                                <tr>
+                                    <td>@flight.FromAirport</td>
+                                    <td>@flight.ToAirport</td>
+                                    <td>@flight.Date?.ToDateTime(TimeOnly.MinValue).ToString("dd MMM yyyy")</td>
+									@*<td>@flight.Date.ToString("HH:mm")</td>*@
+                                    <td>
+                                        @if (flight.AvailableSeats > 0)
+                                        {
+                                            <span class="badge bg-success">@flight.AvailableSeats seats</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Sold Out</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (flight.AvailableSeats > 0)
+                                        {
+                                            <a asp-action="Buy" asp-route-id="@flight.Id" class="btn btn-sm btn-primary">Book</a>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-sm btn-secondary" disabled>Book</button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <nav aria-label="Flights pagination">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-route-page="@(Model.CurrentPage - 1)"
+                               asp-route-fromAirportId="@Model.FromAirportId"
+                               asp-route-toAirportId="@Model.ToAirportId"
+                               asp-route-departureDate="@Model.DepartureDate?.ToString("yyyy-MM-dd")">
+                                Previous
+                            </a>
+                        </li>
+
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                <a class="page-link"
+                                   asp-route-page="@i"
+                                   asp-route-fromAirportId="@Model.FromAirportId"
+                                   asp-route-toAirportId="@Model.ToAirportId"
+                                   asp-route-departureDate="@Model.DepartureDate?.ToString("yyyy-MM-dd")">
+                                    @i
+                                </a>
+                            </li>
+                        }
+
+                        <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-route-page="@(Model.CurrentPage + 1)"
+                               asp-route-fromAirportId="@Model.FromAirportId"
+                               asp-route-toAirportId="@Model.ToAirportId"
+                               asp-route-departureDate="@Model.DepartureDate?.ToString("yyyy-MM-dd")">
+                                Next
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+	<link rel="stylesheet" href="~/css/flights-overview.css" />
+	<script src="~/js/flights-overview.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Set previous selections
+            $("#fromAirportId").val('@Model.FromAirportId');
+            $("#toAirportId").val('@Model.ToAirportId');
+
+            // Add enhanced interactivity if desired
+            $("#fromAirportId, #toAirportId").change(function() {
+                // For additional interactivity, you could implement AJAX here
+                // to dynamically load available flights or update the other dropdown
+            });
+
+            // Reset filters
+            $("#resetFilters").click(function() {
+                $("#fromAirportId").val('');
+                $("#toAirportId").val('');
+                $("#departureDate").val('');
+                $("#filterForm").submit();
+            });
+        });
+    </script>
 }

@@ -4,7 +4,7 @@ namespace BookingSite.ViewModels;
 
 public class CartModel
 {
-    public List<CartItem>? Carts = new List<CartItem>();
+    public List<CartItem> Carts = new List<CartItem>();
 
     public double ComputeTotalValue() =>
         Carts.Sum(e => e.Price);

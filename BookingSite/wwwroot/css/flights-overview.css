@@ -1,0 +1,46 @@
+﻿.flight-card {
+    transition: transform 0.2s ease-in-out;
+    margin-bottom: 1rem;
+}
+
+    .flight-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+.airport-code {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.flight-date {
+    color: #6c757d;
+}
+
+.flight-price {
+    font-weight: bold;
+    color: #28a745;
+}
+
+.seats-available {
+    font-size: 0.9rem;
+}
+
+.pagination {
+    margin-top: 2rem;
+}
+
+.filter-card {
+    margin-bottom: 2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .filter-row {
+        flex-direction: column;
+    }
+
+    .filter-col {
+        margin-bottom: 1rem;
+    }
+}

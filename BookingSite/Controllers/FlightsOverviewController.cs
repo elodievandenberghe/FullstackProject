@@ -44,18 +44,54 @@ public class FlightsOverviewController : Controller
     }
 
     [Authorize]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int? fromAirportId, int? toAirportId, DateTime? departureDate, int page = 1)
     {
         try
         {
+            // Get all flights for the date range
             var lstFlights = await _flightService.GetAllAsync();
             if (lstFlights != null)
             {
-                var flightViewModels = _mapper.Map<List<FlightViewModel>>(
-                    lstFlights.Where(f =>
-                        f.Date.ToDateTime(TimeOnly.MinValue) >= MIN_DATE &&
-                        f.Date.ToDateTime(TimeOnly.MinValue) <= MAX_DATE)
-                );
+                // Filter by date range (3 days to 6 months from today)
+                var filteredFlights = lstFlights.Where(f =>
+                    f.Date.ToDateTime(TimeOnly.MinValue) >= MIN_DATE &&
+                    f.Date.ToDateTime(TimeOnly.MinValue) <= MAX_DATE);
+
+                // Apply additional filters
+                if (fromAirportId.HasValue)
+                {
+                    filteredFlights = filteredFlights.Where(f => f.Route.FromAirportId == fromAirportId.Value);
+                }
+
+                if (toAirportId.HasValue)
+                {
+                    filteredFlights = filteredFlights.Where(f => f.Route.ToAirportId == toAirportId.Value);
+                }
+
+                if (departureDate.HasValue)
+                {
+                    DateOnly selectedDate = DateOnly.FromDateTime(departureDate.Value);
+                    filteredFlights = filteredFlights.Where(f => f.Date == selectedDate);
+                }
+
+                // Get all airports for filter dropdowns
+                var airports = await GetAirportsForDropdowns();
+
+                // Define pagination parameters
+                const int pageSize = 10;
+                var totalFlights = filteredFlights.Count();
+                var totalPages = (int)Math.Ceiling(totalFlights / (double)pageSize);
+
+                page = Math.Max(1, Math.Min(page, totalPages == 0 ? 1 : totalPages));
+
+                // Get current page of flights
+                var pagedFlights = filteredFlights
+                    .OrderBy(f => f.Date)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize);
+
+                // Map to view models
+                var flightViewModels = _mapper.Map<List<FlightViewModel>>(pagedFlights);
 
                 // For each flight, check availability and set capacity info
                 foreach (var flight in flightViewModels)
@@ -63,6 +99,9 @@ public class FlightsOverviewController : Controller
                     try
                     {
                         var availableSeats = await _flightCapacityChecker.GetAvailableSeats(flight.Id);
+                        var cart = HttpContext.Session.GetObject<CartModel>("ShoppingCart") ?? new CartModel();
+                        // Add tickets already in cart
+                        availableSeats -= cart.Carts.Where(c => c.FlightId == flight.Id).Count();
                         flight.AvailableSeats = availableSeats;
                     }
                     catch (NoPlaneAssignedException)
@@ -70,16 +109,35 @@ public class FlightsOverviewController : Controller
                         flight.AvailableSeats = 0;
                     }
                 }
-                
-                return View(flightViewModels);
+
+                // Build view model with pagination and filter data
+                var viewModel = new FlightsOverviewViewModel
+                {
+                    Flights = flightViewModels.Where(f => f.AvailableSeats > 0).ToList(),
+                    Airports = airports,
+                    CurrentPage = page,
+                    TotalPages = totalPages,
+                    FromAirportId = fromAirportId,
+                    ToAirportId = toAirportId,
+                    DepartureDate = departureDate
+                };
+
+                return View(viewModel);
             }
         }
         catch (Exception ex)
         {
-            Debug.WriteLine("errorlog" + ex.Message);
+            _logger.LogError(ex, "Error in FlightsOverview Index");
+            ModelState.AddModelError(string.Empty, "An error occurred while loading flights.");
         }
 
-        return View();
+        // Fallback to empty view model
+        return View(new FlightsOverviewViewModel
+        {
+            Airports = await GetAirportsForDropdowns(),
+            CurrentPage = 1,
+            TotalPages = 1
+        });
     }
 
     [Authorize]
@@ -376,6 +434,29 @@ public class FlightsOverviewController : Controller
 
         HttpContext.Session.SetObject("ShoppingCart", shopping);
         return RedirectToAction("Index", "Cart");
+    }
+
+    private async Task<List<SelectListItem>> GetAirportsForDropdowns()
+    {
+        // This will typically come from your airport service
+        try
+        {
+            var airportService = HttpContext.RequestServices.GetService<IService<Airport, int>>();
+            if (airportService != null)
+            {
+                var airports = await airportService.GetAllAsync();
+                return airports
+                    .Select(a => new SelectListItem { Value = a.Id.ToString(), Text = a.Name })
+                    .OrderBy(a => a.Text)
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading airports for dropdowns");
+        }
+
+        return new List<SelectListItem>();
     }
 
     private async Task<TicketOverviewViewModel?> GetTicketOverviewViewModelAsync(int flightId)
