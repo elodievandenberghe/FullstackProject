@@ -68,13 +68,23 @@ public class CartController : Controller
                 {
                     try
                     {
+                        // Check general availability
                         if (!await _flightCapacityChecker.CheckFlightAvailability(item.FlightId))
                         {
+                            HttpContext.Session.Remove("ShoppingCart"); // Clear cart
                             return View("NoSeatAvailable");
+                        }
+
+                        // Check class-specific availability
+                        if (!await _flightCapacityChecker.CheckFlightAvailabilityByClass(item.FlightId, item.SeatClass))
+                        {
+                            HttpContext.Session.Remove("ShoppingCart"); // Clear cart
+                            return View("NoSeatsInClassAvailable");
                         }
                     }
                     catch (NoPlaneAssignedException)
                     {
+                        HttpContext.Session.Remove("ShoppingCart"); // Clear cart
                         return View("NoPlaneAssigned");
                     }
                 }
@@ -102,7 +112,7 @@ public class CartController : Controller
 
                     await _ticketService.AddAsync(ticket);
                 }
-                
+
                 var summaryStr = "";
                 foreach (var ticket in booking.Tickets)
                 {

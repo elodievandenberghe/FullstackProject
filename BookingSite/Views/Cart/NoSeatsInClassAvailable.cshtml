@@ -1,0 +1,17 @@
+@{
+    ViewData["Title"] = "No Seats Available";
+	ViewData["TitleIcon"] = "exclamation-triangle";
+}
+
+<div class="text-center py-5">
+    <div class="mb-4">
+        <i class="bi bi-exclamation-triangle text-warning" style="font-size: 5rem;"></i>
+    </div>
+    <h2 class="text-danger">Sorry, seats are no longer available in your selected class</h2>
+    <p class="lead">While you were shopping, other passengers have booked the remaining seats in your selected class.</p>
+    <div class="mt-4">
+        <a asp-controller="FlightsOverview" asp-action="Index" class="btn btn-primary">
+            <i class="bi bi-search"></i> Browse Other Flights
+        </a>
+    </div>
+</div>
