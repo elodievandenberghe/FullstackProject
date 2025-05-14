@@ -1,63 +1,262 @@
-@model BookingSite.Domains.Models.Booking
+@model BookingSite.ViewModels.BookingDetailsViewModel
 
 @{
     ViewData["Title"] = "Booking Details";
 }
 
-<h1>Booking Details</h1>
-
-<div>
-    <h4>Booking Reference: @Model.Id</h4>
-    <hr />
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="text-primary">
+            <i class="bi bi-ticket-detailed"></i> Booking Details
+        </h1>
+        <a asp-action="Index" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Back to My Bookings
+        </a>
+    </div>
     
-    <h5>Tickets in this booking:</h5>
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Booking #@Model.Id</h4>
+                <span class="badge bg-light text-primary">@Model.Tickets.Count @(Model.Tickets.Count == 1 ? "Ticket" : "Tickets")</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="mb-2">
+                        <strong><i class="bi bi-calendar-event"></i> Booking Date:</strong>
+                        <span class="ms-2">@Model.CreatedAt.ToString("MMMM dd, yyyy")</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-2">
+                        <strong><i class="bi bi-person"></i> Booked By:</strong>
+                        <span class="ms-2">@Model.UserName</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-2">
+                        <strong><i class="bi bi-credit-card"></i> Total Price:</strong>
+                        <span class="ms-2">€@Model.TotalPrice.ToString("F2")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     
     @if (Model.Tickets != null && Model.Tickets.Any())
     {
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Ticket ID</th>
-                    <th>Flight</th>
-                    <th>Seat</th>
-                    <th>Meal</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var ticket in Model.Tickets)
-                {
-                    <tr>
-                        <td>@ticket.Id</td>
-                        <td>
-                            @if (ticket.Flight != null)
+        <h4 class="mb-3">Your Tickets</h4>
+        
+        foreach (var ticket in Model.Tickets)
+        {
+            var statusClass = ticket.IsCancelled ? "cancelled" : "";
+            var flight = ticket.Flight;
+            
+            <div class="card shadow-sm mb-3 ticket-card @statusClass">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="flight-route">
+                                    <h5 class="mb-0">@flight.Route.FromAirport.Name</h5>
+                                    <div class="airport-code">AP@flight.Route.FromAirport.Id</div>
+                                </div>
+                                <div class="flight-arrow mx-3">
+                                    <i class="bi bi-arrow-right"></i>
+                                </div>
+                                <div class="flight-route">
+                                    <h5 class="mb-0">@flight.Route.ToAirport.Name</h5>
+                                    <div class="airport-code">AP@flight.Route.ToAirport.Id</div>
+                                </div>
+                            </div>
+                            
+                            <div class="ticket-details">
+                                <div class="row">
+                                    <div class="col-sm-4 mb-2">
+                                        <div class="detail-item">
+                                            <i class="bi bi-calendar3 me-2 text-primary"></i>
+                                            <strong>Date:</strong> 
+                                            <span>@flight.Date.ToDateTime(TimeOnly.MinValue).ToString("MMM dd, yyyy")</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-4 mb-2">
+                                        <div class="detail-item">
+                                            <i class="bi bi-airplane-engines me-2 text-primary"></i>
+                                            <strong>Flight:</strong>
+                                            <span>@flight.Id</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-4 mb-2">
+                                        <div class="detail-item">
+                                            <i class="bi bi-ticket-perforated me-2 text-primary"></i>
+                                            <strong>Ticket:</strong>
+                                            <span>@ticket.Id</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-sm-4 mb-2">
+                                        <div class="detail-item">
+                                            <i class="bi bi-person-vcard me-2 text-primary"></i>
+                                            <strong>Seat:</strong>
+                                            <span>@(ticket.SeatNumber.HasValue ? ticket.SeatNumber.Value.ToString() : "Not yet assigned")</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-4 mb-2">
+                                        <div class="detail-item">
+                                            <i class="bi bi-star me-2 text-primary"></i>
+                                            <strong>Class:</strong>
+                                            <span>
+                                                <span class="badge @(ticket.SeatClassName == "FirstClass" ? "bg-warning" : "bg-info") text-white">
+                                                    @(ticket.SeatClassName == "FirstClass" ? "First Class" : "Second Class")
+                                                </span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-4 mb-2">
+                                        <div class="detail-item">
+                                            <i class="bi bi-cup-hot me-2 text-primary"></i>
+                                            <strong>Meal:</strong>
+                                            <span>@ticket.MealDescription</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 text-md-end">
+                            <div class="mb-3">
+                                <div class="ticket-price">
+                                    <span class="price-label">Price:</span>
+                                    <span class="price-amount">@(ticket.Price != null ? "€" + ticket.Price?.ToString("F2") : "Not Available")</span>
+                                </div>
+                                
+                                @if (ticket.IsCancelled)
+                                {
+                                    <div class="ticket-status mt-2">
+                                        <span class="badge bg-danger">Cancelled</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="ticket-status mt-2">
+                                        <span class="badge bg-success">Active</span>
+                                    </div>
+                                }
+                            </div>
+                            
+                            @if (!ticket.IsCancelled)
                             {
-                                @ticket.Flight.Id
+                                <button class="btn @(ticket.Price == null ? "btn-outline-secondary" : "btn-outline-danger") cancel-ticket-btn"
+                                        @(ticket.Price == null ? "disabled" : "")
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#cancelModal" 
+                                        data-ticket-id="@ticket.Id">
+                                    
+                                    <i class="bi bi-x-circle"></i> @(ticket.Price == null ? "Cancel Not Available, Please contact support" : "Cancel Tickets")
+                                </button>
                             }
-                        </td>
-                        <td>
-                            @(ticket.SeatNumber.HasValue ? ticket.SeatNumber.Value.ToString() : "Not assigned")
-                        </td>
-                        <td>
-                            @if (ticket.Meal != null)
-                            {
-                                @ticket.Meal.Description
-                            }
-                        </td>
-                        <td>
-                            @(ticket.IsCancelled == true ? "Cancelled" : "Active")
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
     }
     else
     {
-        <p>No tickets found in this booking.</p>
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No tickets found in this booking.
+        </div>
     }
 </div>
 
-<div>
-    <a asp-action="Index">Back to My Bookings</a>
+<!-- Cancel Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="cancelModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Cancel Ticket
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to cancel this ticket? This action cannot be undone.</p>
+                <p class="text-muted small">Cancellation policy: Please note that cancellations may be subject to fees depending on your booking terms.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Keep Ticket</button>
+                <form asp-action="CancelTicket" method="post" id="cancelTicketForm">
+                    <input type="hidden" id="ticketIdInput" name="ticketId" value="" />
+                    <button type="submit" class="btn btn-danger">Yes, Cancel Ticket</button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
+
+<style>
+    .ticket-card {
+        border-left: 5px solid #3498db;
+        transition: transform 0.2s;
+    }
+    
+    .ticket-card:hover {
+        transform: translateY(-3px);
+    }
+    
+    .ticket-card.cancelled {
+        border-left-color: #e74c3c;
+        opacity: 0.75;
+    }
+    
+    .flight-route {
+        text-align: center;
+    }
+    
+    .airport-code {
+        font-size: 0.8rem;
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    .flight-arrow {
+        color: #3498db;
+        font-size: 1.5rem;
+    }
+    
+    .detail-item {
+        margin-bottom: 0.5rem;
+    }
+    
+    .ticket-price {
+        font-size: 1.2rem;
+    }
+    
+    .price-amount {
+        font-weight: bold;
+        color: #2c3e50;
+    }
+    
+    .price-label {
+        color: #7f8c8d;
+        margin-right: 0.5rem;
+    }
+</style>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <script>
+        $(document).ready(function() {
+            // When cancel button is clicked, set the ticketId in the modal's form
+            $('.cancel-ticket-btn').click(function() {
+                var ticketId = $(this).data('ticket-id');
+                $('#ticketIdInput').val(ticketId);
+            });
+        });
+    </script>
+}

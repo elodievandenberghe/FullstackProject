@@ -31,7 +31,7 @@ public class BookingsController : Controller
         {
             BookingId = booking.Id,
             UserId = booking.UserId,
-            CreatedAt = DateTime.Now, // You may want to add CreatedAt to your Booking model
+            CreatedAt = DateTime.Now, 
             Tickets = booking.Tickets.Select(t => new TicketPreviewViewModel
             {
                 TicketId = t.Id,
@@ -40,7 +40,7 @@ public class BookingsController : Controller
                 Date = t.Flight.Date.ToDateTime(TimeOnly.MinValue),
                 SeatClass = t.SeatClass == SeatClass.FirstClass ? "First Class" : "Second Class",
                 MealDescription = t.Meal?.Description ?? "No meal",
-                Price = (decimal?)(t.Price ?? t.Flight.Route.Price),
+                Price = t.Price,
                 IsCancelled = t.IsCancelled
             }).ToList()
         }).ToList();
@@ -48,22 +48,52 @@ public class BookingsController : Controller
         return View(viewModel);
     }
 
+    [Authorize]
     public async Task<IActionResult> Details(int id)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var booking = await _bookingService.FindByIdAsync(id);
-        
-        if (booking == null)
+
+        if (booking == null || booking.UserId != userId)
         {
             return NotFound();
         }
 
-        // Only allow the owner of the booking to view it
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (booking.UserId != userId)
+        var viewModel = new BookingDetailsViewModel
         {
-            return Forbid();
-        }
+            Id = booking.Id,
+            UserName = booking.User?.UserName,
+            //CreatedAt = booking.CreatedAt,
+            TotalPrice = booking.Tickets?.Sum(t => t.Price ?? 0) ?? 0,
+            Tickets = booking.Tickets?.Select(t => new BookingTicketViewModel
+            {
+                Id = t.Id,
+                SeatNumber = t.SeatNumber,
+                SeatClassName = t.SeatClass.ToString(),
+                IsCancelled = t.IsCancelled,
+                Price = t.Price,
+                MealDescription = t.Meal?.Description ?? "No meal",
+                Flight = new BookingFlightViewModel
+                {
+                    Id = t.Flight.Id,
+                    Date = t.Flight.Date,
+                    Route = new BookingRouteViewModel
+                    {
+                        FromAirport = new AirportViewModel
+                        {
+                            Id = t.Flight.Route.FromAirport.Id,
+                            Name = t.Flight.Route.FromAirport.Name
+                        },
+                        ToAirport = new AirportViewModel
+                        {
+                            Id = t.Flight.Route.ToAirport.Id,
+                            Name = t.Flight.Route.ToAirport.Name
+                        }
+                    }
+                }
+            }).ToList() ?? new List<BookingTicketViewModel>()
+        };
 
-        return View(booking);
+        return View(viewModel);
     }
 }

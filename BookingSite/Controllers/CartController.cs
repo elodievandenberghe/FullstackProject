@@ -95,7 +95,8 @@ public class CartController : Controller
                         FlightId = item.FlightId,
                         IsCancelled = false,
                         MealId = item.MealId,
-                        SeatClass = item.SeatClass
+                        SeatClass = item.SeatClass,
+                        Price = item.Price
                     };
 
                     await _ticketService.AddAsync(ticket);

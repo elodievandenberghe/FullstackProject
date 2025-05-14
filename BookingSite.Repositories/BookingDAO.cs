@@ -47,15 +47,24 @@ public class BookingDAO : IBookingDAO
         try
         {
             return await _dbContext.Bookings
-                .Include(b => b.Tickets)
                 .Include(b => b.User)
+                .Include(b => b.Tickets)
+                    .ThenInclude(t => t.Meal)
+                .Include(b => b.Tickets)
+                    .ThenInclude(t => t.Flight)
+                        .ThenInclude(f => f.Route)
+                            .ThenInclude(r => r.FromAirport)
+                .Include(b => b.Tickets)
+                    .ThenInclude(t => t.Flight)
+                        .ThenInclude(f => f.Route)
+                            .ThenInclude(r => r.ToAirport)
                 .FirstOrDefaultAsync(b => b.Id == id);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error in FindByIdAsync: {ex.Message}");
-            throw;
-        }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error in FindByIdAsync: {ex.Message}");
+                    throw;
+                }
     }
 
     public async Task<IEnumerable<Booking>?> GetAllAsync()
@@ -63,8 +72,15 @@ public class BookingDAO : IBookingDAO
         try
         {
             return await _dbContext.Bookings
-                .Include(b => b.Tickets)
                 .Include(b => b.User)
+                .Include(b => b.Tickets)
+                    .ThenInclude(t => t.Flight)
+                .Include(b => b.Tickets)
+                    .ThenInclude(t => t.Meal)
+                .Include(b => b.Tickets)
+                    .ThenInclude(t => t.Flight.Route.FromAirport)
+                .Include(b => b.Tickets)
+                .ThenInclude(t => t.Flight.Route.ToAirport)
                 .Where(b => b.Tickets.Count > 0)
                 .ToListAsync();
         }
