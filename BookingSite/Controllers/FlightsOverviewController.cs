@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.IdentityModel.Tokens;
 using System.Diagnostics;
+using System.Net.Sockets;
 
 namespace BookingSite.Controllers;
 
@@ -274,20 +275,38 @@ public class FlightsOverviewController : Controller
         {
             return NotFound("Booking is only available from 6 months before until 3 days before departure");
         }
+        // Convert tickets from the model to TicketSelectionData for price calculation
+        var ticketSelectionData = model.Tickets.Select(t => new TicketSelectionData
+        {
+            SeatClassId = t.SeatClass,
+            MealId = Convert.ToInt32(t.Meal)
+        }).ToList();
+
+        // Calculate proper pricing using the existing method that includes all fees
+        var calculatedTickets = await CalculateTicketPricesAsync(flight, ticketSelectionData);
 
         var shopping = HttpContext.Session.GetObject<CartModel>("ShoppingCart") ?? new CartModel();
 
-        foreach (var ticket in model.Tickets)
+        for (int i = 0; i < model.Tickets.Count; i++)
         {
+            var ticket = model.Tickets[i];
+            var calculatedTicket = calculatedTickets[i];
+
             var selectedSeatClass = (SeatClass)Convert.ToInt32(ticket.SeatClass);
-            var price = flight.Route.Price * (selectedSeatClass == SeatClass.FirstClass ? 1.5 : 1.0);
+
+            // Calculate the total price including all fees
+            double totalPrice = calculatedTicket.BasePrice;
+            foreach (var fee in calculatedTicket.Fees)
+            {
+                totalPrice += fee.Value;
+            }
 
             var item = new CartItem()
             {
                 FlightId = flight.Id,
                 MealId = Convert.ToInt32(ticket.Meal),
                 SeatClass = selectedSeatClass,
-                Price = price
+                Price = totalPrice
             };
 
             shopping.Carts.Add(item);
