@@ -12,6 +12,7 @@ using BookingSite.ViewModels;
 using BookingSite.ViewModels.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 
 namespace BookingSite.Controllers;
 
@@ -19,17 +20,16 @@ public class HotelController : Controller
 {
     private static HttpClient _client = new HttpClient();
     private IBookingService _bookingService;
-    private readonly UserManager<ApplicationUser> _userManager;
-
-
-    public HotelController(IBookingService bookingService, UserManager<ApplicationUser> userManager)
+    private readonly TripAdvisorApiKey _tripAdvisorApiKey;
+    
+    public HotelController(IBookingService bookingService, IOptions<TripAdvisorApiKey> tripAdvisorApiKey)
     {
         if (_client.BaseAddress == null)
         {
             _client.BaseAddress = new Uri("https://api.content.tripadvisor.com/api/v1");
         }
-        _userManager = userManager;
         _bookingService = bookingService;
+        _tripAdvisorApiKey = tripAdvisorApiKey.Value;
     }
 
     [Authorize]
@@ -37,21 +37,21 @@ public class HotelController : Controller
     {
         var value = await _bookingService.GetCityLattitudeLongitudeOfLastBookedTicketsAsync(User.FindFirstValue(ClaimTypes.NameIdentifier));
         List<HotelViewModel> data = new List<HotelViewModel>();
+        Console.WriteLine(_client.BaseAddress+_tripAdvisorApiKey.ApiKey);
         
         foreach (var item in value)
         {
-           var response = await MakeApiRequest<HotelViewModel>($"location/search?key=34B9C74963ED491BBC3D7A5817EF2814&searchQuery=hotel&latLong={item}&language=en");
+           var response = await MakeApiRequest<HotelViewModel>($"location/search?key={_tripAdvisorApiKey.ApiKey}&searchQuery=hotel&latLong={item}&language=en");
            data.AddRange(response.Data.Select(d => d).Take(3).ToList());
         }
-        Console.WriteLine(data);
         foreach (var item in data)
         {
             var imageurl = MakeApiRequest<HotelImageViewModel>(
-                $"location/{item.LocationId}/photos?language=en&key=34B9C74963ED491BBC3D7A5817EF2814");
+                $"location/{item.LocationId}/photos?language=en&key={_tripAdvisorApiKey.ApiKey}");
             
 
             var weburl = ViewInfo(
-                $"location/{item.LocationId}/details?&key=34B9C74963ED491BBC3D7A5817EF2814");
+                $"location/{item.LocationId}/details?&key={_tripAdvisorApiKey.ApiKey}");
                 
             await Task.WhenAll(imageurl, weburl);
             item.ImageUrl = imageurl?.Result.Data?[0]?.Images?.Original?.Url ?? null;
@@ -81,13 +81,6 @@ public class HotelController : Controller
             return result;
         }
     } 
-
-    public async Task<IEnumerable<RootObject<T>>> MakeParallelApiRequest<T>(List<string> urls)
-    {
-        List<Task<RootObject<T>>> tasks = urls.Select(url => MakeApiRequest<T>(url)).ToList();
-        RootObject<T>[] results = await Task.WhenAll(tasks);
-        return results;
-    }
 
     public async Task<HotelInfoViewModel> ViewInfo(string endpoint)
     {

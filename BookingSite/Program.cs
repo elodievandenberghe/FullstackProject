@@ -1,4 +1,5 @@
 using System.Globalization;
+using BookingSite.Controllers;
 using Microsoft.EntityFrameworkCore;
 using BookingSite.Data;
 using BookingSite.Domains.DatabaseContext;
@@ -71,12 +72,13 @@ builder.Services.AddTransient<ITicketService, TicketService>();
 builder.Services.AddTransient<IPlaneDAO, PlaneDAO>();
 builder.Services.AddTransient<IPlaneService, PlaneService>();
 
-builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.AddSingleton<IEmailSender, EmailSender>();
 
 builder.Services.AddTransient<IBookingDAO, BookingDAO>();
 builder.Services.AddTransient<IBookingService, BookingService>();
 
-
+builder.Services.Configure<TripAdvisorApiKey>(builder.Configuration.GetSection("TripAdvisorApiKey"));
+builder.Services.Configure<BrevoApiConfig>(builder.Configuration.GetSection("BrevoApiConfig"));
 
 builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration);
 
