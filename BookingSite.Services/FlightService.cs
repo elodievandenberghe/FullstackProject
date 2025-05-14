@@ -42,4 +42,9 @@ public class FlightService : IFlightService
     {
         return await _flightDAO.FindByFromAndToAirportIdAsync(fromId, toId);
     }
+
+    public async Task<IEnumerable<Flight>> GetAllFilteredAsync(int? fromAirportId, int? toAirportId, DateTime? departureDate)
+    {
+        return await _flightDAO.GetAllFilteredAsync(fromAirportId, toAirportId, departureDate);
+    }
 }

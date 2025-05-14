@@ -49,7 +49,7 @@ public class FlightsOverviewController : Controller
         try
         {
             // Get all flights for the date range
-            var lstFlights = await _flightService.GetAllAsync();
+            var lstFlights = await _flightService.GetAllFilteredAsync(fromAirportId,toAirportId,departureDate);
             if (lstFlights != null)
             {
                 // Filter by date range (3 days to 6 months from today)

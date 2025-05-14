@@ -116,4 +116,41 @@ public class FlightDAO : IFlightDAO
             throw;
         }
     }
+
+    public async Task<IEnumerable<Flight>> GetAllFilteredAsync(int? fromAirportId, int? toAirportId, DateTime? departureDate)
+    {
+        try
+        {
+            var query = _dbContext.Flights
+                .Include(f => f.Route.ToAirport)
+                .Include(f => f.Route.FromAirport)
+                .Include(f => f.Route.RouteSegments)
+                .ThenInclude(rs => rs.Airport)
+                .Include(f => f.Plane)
+                .AsQueryable();
+
+            if (fromAirportId.HasValue)
+            {
+                query = query.Where(f => f.Route.FromAirportId == fromAirportId.Value);
+            }
+
+            if (toAirportId.HasValue)
+            {
+                query = query.Where(f => f.Route.ToAirportId == toAirportId.Value);
+            }
+
+            if (departureDate.HasValue)
+            {
+                var date = DateOnly.FromDateTime(departureDate.Value);
+                query = query.Where(f => f.Date == date);
+            }
+
+            return await query.ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in GetAllFilteredAsync: {ex.Message}");
+            throw;
+        }
+    }
 }
