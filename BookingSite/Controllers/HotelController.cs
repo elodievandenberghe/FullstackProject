@@ -76,7 +76,7 @@ public class HotelController : Controller
         }
         catch (Exception ex)
         {
-            return View("Error");
+            return View("ApiError");
         }
     }
     
