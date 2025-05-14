@@ -24,6 +24,9 @@ public class FlightsOverviewController : Controller
     private FlightCapacityChecker _flightCapacityChecker;
     private ILogger<FlightsOverviewController> _logger;
 
+    private static readonly DateTime MIN_DATE = DateTime.Today.AddDays(3);
+    private static readonly DateTime MAX_DATE = DateTime.Today.AddMonths(6);
+
     private readonly IMapper _mapper;
 
     public FlightsOverviewController(IMapper mapper, IFlightService flightService, ISeasonService seasonService,
@@ -47,8 +50,12 @@ public class FlightsOverviewController : Controller
             var lstFlights = await _flightService.GetAllAsync();
             if (lstFlights != null)
             {
-                var flightViewModels = _mapper.Map<List<FlightViewModel>>(lstFlights);
-                
+                var flightViewModels = _mapper.Map<List<FlightViewModel>>(
+                    lstFlights.Where(f =>
+                        f.Date.ToDateTime(TimeOnly.MinValue) >= MIN_DATE &&
+                        f.Date.ToDateTime(TimeOnly.MinValue) <= MAX_DATE)
+                );
+
                 // For each flight, check availability and set capacity info
                 foreach (var flight in flightViewModels)
                 {
@@ -77,6 +84,19 @@ public class FlightsOverviewController : Controller
     [Authorize]
     public async Task<IActionResult> Buy(int id)
     {
+        var flight = await _flightService.FindByIdAsync(id);
+        if (flight == null)
+        {
+            return NotFound("Flight not found");
+        }
+
+        // Check booking window constraints
+        DateTime flightDate = flight.Date.ToDateTime(TimeOnly.MinValue);
+        if (flightDate < MIN_DATE || flightDate > MAX_DATE)
+        {
+            return NotFound("Booking is only available from 6 months before until 3 days before departure");
+        }
+
         var ticketOverviewVmViewModel = await GetTicketOverviewViewModelAsync(id);
         if (ticketOverviewVmViewModel == null)
         {
@@ -247,6 +267,12 @@ public class FlightsOverviewController : Controller
         if (flight == null)
         {
             return NotFound("Flight not found");
+        }
+
+        DateTime flightDate = flight.Date.ToDateTime(TimeOnly.MinValue);
+        if (flightDate < MIN_DATE || flightDate > MAX_DATE)
+        {
+            return NotFound("Booking is only available from 6 months before until 3 days before departure");
         }
 
         var shopping = HttpContext.Session.GetObject<CartModel>("ShoppingCart") ?? new CartModel();
