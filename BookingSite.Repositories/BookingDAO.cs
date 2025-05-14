@@ -65,6 +65,7 @@ public class BookingDAO : IBookingDAO
             return await _dbContext.Bookings
                 .Include(b => b.Tickets)
                 .Include(b => b.User)
+                .Where(b => b.Tickets.Count > 0)
                 .ToListAsync();
         }
         catch (Exception ex)
@@ -98,7 +99,13 @@ public class BookingDAO : IBookingDAO
                 .Include(b => b.Tickets)
                 .Include(b => b.Tickets)
                 .ThenInclude(t => t.Meal)
+                .Include(b => b.Tickets)
+                .ThenInclude(t => t.Flight.Route.FromAirport)
+                .Include(b => b.Tickets)
+                .ThenInclude(t => t.Flight.Route.ToAirport)
+
                 .Where(b => b.UserId == userId)
+                .Where(b => b.Tickets.Count > 0)
                 .ToListAsync();
         }
         catch (Exception ex)
@@ -114,6 +121,7 @@ public class BookingDAO : IBookingDAO
         {
             return await _dbContext.Bookings
                 .Where(b => b.UserId == userId)
+                .Where(b => b.Tickets.Count > 0)
                 .OrderBy(b => b.Id)
                 .Select(b => b.Tickets
                     .Select(t => t.Flight.Route.ToAirport.City.LatLong).Distinct().ToList())
