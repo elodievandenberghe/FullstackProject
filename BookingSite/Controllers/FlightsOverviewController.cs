@@ -156,6 +156,17 @@ public class FlightsOverviewController : Controller
             return NotFound("Booking is only available from 6 months before until 3 days before departure");
         }
 
+        // Get available seats
+        var availableSeats = await _flightCapacityChecker.GetAvailableSeats(flight.Id);
+        var cart = HttpContext.Session.GetObject<CartModel>("ShoppingCart") ?? new CartModel();
+        availableSeats -= cart.Carts.Where(c => c.FlightId == flight.Id).Count();
+        if (availableSeats <= 0)
+        {
+            return NotFound("No seats available for this flight");
+        }
+
+
+
         var ticketOverviewVmViewModel = await GetTicketOverviewViewModelAsync(id);
         if (ticketOverviewVmViewModel == null)
         {

@@ -119,13 +119,38 @@
     <script>
         $(document).ready(function() {
             let ticketCount = 1;
+            let isProcessing = false
             updateAllTickets();
+
+            function blockUI() {
+                isProcessing = true;
+                // Create overlay if it doesn't exist
+                if ($('#processing-overlay').length === 0) {
+                    $('body').append('<div id="processing-overlay" class="position-fixed top-0 start-0 w-100 h-100" style="background-color: rgba(0,0,0,0.5); z-index: 9999;"><div class="position-absolute top-50 start-50 translate-middle bg-white p-4 rounded shadow"><div class="spinner-border text-primary me-2" role="status"></div><span class="h5">Processing your request...</span></div></div>');
+                } else {
+                    $('#processing-overlay').show();
+                }
+                // Disable all inputs, selects and buttons
+                $('#bookingForm').find('input, select, button').prop('disabled', true);
+                $('#addTicket').prop('disabled', true);
+            }
+
+            function unblockUI() {
+                isProcessing = false;
+                // Hide overlay
+                $('#processing-overlay').hide();
+                // Enable all inputs, selects and buttons
+                $('#bookingForm').find('input, select, button').prop('disabled', false);
+                $('#addTicket').prop('disabled', false);
+            }
 
             // Add ticket button
             $("#addTicket").click(function(e) {
                 e.preventDefault();
+                if (isProcessing) return;
 
                 // Check availability before adding a new ticket
+                blockUI()
                 checkAvailabilityAndAddTicket();
             });
 
@@ -150,6 +175,7 @@
                         } else {
 							showNoAvailabilityMessage();
                         }
+                        unblockUI();
                     },
                     error: function(error) {
                         console.error("Error checking availability:", error);
@@ -293,23 +319,38 @@
             // Bind remove ticket event
             function bindRemoveTicketEvents() {
                 $(".remove-ticket").off("click").on("click", function() {
+                    if (isProcessing) return;
+
+                    blockUI();
                     $(this).closest(".ticket-item").remove();
-                    updateAllTickets();
 
                     // Renumber the passengers after removal
                     $(".ticket-item").each(function(idx) {
                         $(this).find(".card-header h5").text(`Passenger ${idx + 1}`);
-
                         // Update the name attributes for form submission
                         $(this).find(".seat-class-select").attr("name", `tickets[${idx}].SeatClass`);
                         $(this).find(".meal-select").attr("name", `tickets[${idx}].Meal`);
                     });
+
+                    updateAllTickets();
                 });
             }
 
             // Event listeners for class and meal changes
-            $(document).on("change", ".seat-class-select, .meal-select", function() {
-                updateAllTickets();
+            $(document).on("change", ".seat-class-select @*, .meal-select (reanable if meal effects price*@", function() {
+                if (!isProcessing) {
+
+                    // Renumber the passengers
+                    $(".ticket-item").each(function(idx) {
+                        $(this).find(".card-header h5").text(`Passenger ${idx + 1}`);
+                        // Update the name attributes for form submission
+                        $(this).find(".seat-class-select").attr("name", `tickets[${idx}].SeatClass`);
+                        $(this).find(".meal-select").attr("name", `tickets[${idx}].Meal`);
+                    });
+
+                    blockUI();
+                    updateAllTickets();
+                }
             });
 
             // Collect all ticket data from the form
