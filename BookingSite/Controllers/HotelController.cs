@@ -76,7 +76,7 @@ public class HotelController : Controller
         }
         catch (Exception ex)
         {
-            return View("Error");
+            return View("NoBookings");
         }
     }
     
@@ -90,7 +90,7 @@ public class HotelController : Controller
 
             if (cityId == null)
             {
-                return View("Error");
+                return View("NoBookings");
             }
             var city = await _cityService.FindByIdAsync(cityId.Value);
             value = new List<string> { city?.LatLong ?? "" };
@@ -121,7 +121,7 @@ public class HotelController : Controller
         }
         catch (Exception ex)
         {
-            return View("Error");
+            return View("NoBookings");
         }
     }
     
