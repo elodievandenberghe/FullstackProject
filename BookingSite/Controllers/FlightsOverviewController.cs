@@ -128,7 +128,7 @@ public class FlightsOverviewController : Controller
             {
                 new TicketSelectionData
                 {
-                    SeatClassId = ((int)SeatClass.SecondClass).ToString(),
+                    SeatClassId = ((int)SeatClass.FirstClass).ToString(),
                     MealId = null
                 }
             };
@@ -160,7 +160,7 @@ public class FlightsOverviewController : Controller
     /// <summary>
     /// Calculates ticket prices and availability for a given flight and ticket selection.
     /// </summary>
-    public async Task<List<TicketCalculationResponse>> CalculateTicketPricesAsync(Flight flight, List<TicketSelectionData> tickets)
+    public async Task<List<TicketCalculationResponse>> CalculateTicketPricesAsync(Flight flight, List<TicketSelectionData> tickets, bool addShoppingCartTickets = true)
     {
         if (flight?.Plane == null)
             throw new NoPlaneAssignedException("No plane is assigned to this flight");
@@ -169,45 +169,87 @@ public class FlightsOverviewController : Controller
         int secondClassCapacity = flight.Plane.SecondClassCapacity;
 
         var bookedTickets = await _ticketService.GetByFlightIdAsync(flight.Id) ?? throw new Exception("Tickets to check remaining capacity not found");
+
+        // Add Tickets already in the shopping carts
+        if (addShoppingCartTickets)
+        {
+            var shopping = HttpContext.Session.GetObject<CartModel>("ShoppingCart") ?? new CartModel();
+            foreach (var item in shopping.Carts)
+            {
+                bookedTickets = bookedTickets.Append(new Ticket
+                {
+                    SeatClass = item.SeatClass,
+                    IsCancelled = false
+                });
+            }
+        }
+
         int bookedFirstClass = bookedTickets.Count(t => t.SeatClass == SeatClass.FirstClass && !t.IsCancelled);
         int bookedSecondClass = bookedTickets.Count(t => t.SeatClass == SeatClass.SecondClass && !t.IsCancelled);
 
-        int remainingFirstClass = firstClassCapacity - bookedFirstClass;
-        int remainingSecondClass = secondClassCapacity - bookedSecondClass;
-
-        bool firstClassAvailable = remainingFirstClass > 0;
-        bool secondClassAvailable = remainingSecondClass > 0;
+        // Calculate initial availability
+        int firstClassAvailable = firstClassCapacity - bookedFirstClass;
+        int secondClassAvailable = secondClassCapacity - bookedSecondClass;
 
         var response = new List<TicketCalculationResponse>();
-        int currentFirstClassCount = 0;
+        var validTickets = new List<TicketSelectionData>();
 
+        // First pass: Ensure classes are valid based on availability and adjust if needed
         foreach (var ticket in tickets)
         {
             int selectedClass = !ticket.SeatClassId.IsNullOrEmpty()
                 ? Convert.ToInt32(ticket.SeatClassId)
                 : (int)SeatClass.SecondClass;
 
-            // Enforce first class capacity
-            if (selectedClass == (int)SeatClass.FirstClass)
+            // Check if the selected class is still available
+            if (selectedClass == (int)SeatClass.FirstClass && firstClassAvailable <= 0)
             {
-                if (currentFirstClassCount >= remainingFirstClass)
+                // First class not available, try second class
+                if (secondClassAvailable > 0)
+                {
                     selectedClass = (int)SeatClass.SecondClass;
+                    secondClassAvailable--;
+                    validTickets.Add(ticket); // Add to our valid tickets
+                }
                 else
-                    currentFirstClassCount++;
+                {
+                    // No seats available at all, don't add this ticket or any subsequent ones
+                    break;
+                }
+            }
+            else if (selectedClass == (int)SeatClass.SecondClass && secondClassAvailable <= 0)
+            {
+                // Second class not available, try first class
+                if (firstClassAvailable > 0)
+                {
+                    selectedClass = (int)SeatClass.FirstClass;
+                    firstClassAvailable--;
+                    validTickets.Add(ticket); // Add to our valid tickets
+                }
+                else
+                {
+                    // No seats available at all, don't add this ticket or any subsequent ones
+                    break;
+                }
+            }
+            else
+            {
+                // Selected class is available, decrement the appropriate counter
+                if (selectedClass == (int)SeatClass.FirstClass)
+                    firstClassAvailable--;
+                else
+                    secondClassAvailable--;
+
+                validTickets.Add(ticket); // Add to our valid tickets
             }
 
-            var availableClasses = new List<int>();
-            if (firstClassAvailable && (currentFirstClassCount < remainingFirstClass))
-                availableClasses.Add((int)SeatClass.FirstClass);
-            if (secondClassAvailable)
-                availableClasses.Add((int)SeatClass.SecondClass);
-
+            // Create ticket response
             var ticketResponse = new TicketCalculationResponse
             {
                 BasePrice = flight.Route.Price,
                 SelectedMeal = ticket.MealId,
                 SelectedClass = selectedClass,
-                AvailableClasses = availableClasses
+                AvailableClasses = new List<int>() // Will be populated in second pass
             };
 
             // Add class upgrade fee
@@ -243,6 +285,26 @@ public class FlightsOverviewController : Controller
             }
 
             response.Add(ticketResponse);
+        }
+
+        // At this point we know which tickets we're keeping and their selected class
+        // Now determine available classes for each ticket based on remaining capacity
+        bool isFirstClassStillAvailable = firstClassAvailable > 0;
+        bool isSecondClassStillAvailable = secondClassAvailable > 0;
+
+        // Second pass: Set available classes based on remaining capacity
+        for (int i = 0; i < response.Count; i++)
+        {
+            var availableClasses = new List<int>();
+
+            // Add class options based on current availability
+            if (isFirstClassStillAvailable || response[i].SelectedClass == (int)SeatClass.FirstClass)
+                availableClasses.Add((int)SeatClass.FirstClass);
+
+            if (isSecondClassStillAvailable || response[i].SelectedClass == (int)SeatClass.SecondClass)
+                availableClasses.Add((int)SeatClass.SecondClass);
+
+            response[i].AvailableClasses = availableClasses;
         }
 
         return response;

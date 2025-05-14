@@ -103,7 +103,7 @@
                             </div>
                             <div class="col-md-6 text-end">
                                 <h4>Total Price: <span class="text-primary" id="total-price">€@Model.Price</span></h4>
-                                <button type="submit" class="btn btn-primary btn-lg mt-3">
+                                <button type="submit" id="submitButton" class="btn btn-primary btn-lg mt-3">
                                     <i class="bi bi-cart-plus"></i> Add to Shopping Cart
                                 </button>
                             </div>
@@ -432,7 +432,7 @@
                     if ($("#meal-validation-msg").length === 0) {
                         $("<div id='meal-validation-msg' class='alert alert-info mt-3'>" +
                           "Please select a meal for all passengers before adding to cart</div>")
-                            .insertBefore("button[type='submit']");
+                            .insertBefore("#submitButton");
                     }
                 } else {
                     $("#meal-validation-msg").remove();
