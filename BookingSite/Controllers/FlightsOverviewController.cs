@@ -16,7 +16,7 @@ namespace BookingSite.Controllers;
 
 public class FlightsOverviewController : Controller
 {
-    private IService<Flight, int> _flightService;
+    private IFlightService _flightService;
     private IMealChoiceService _mealService;
     private ISeasonService _seasonService;
     private ITicketService _ticketService;
@@ -26,7 +26,7 @@ public class FlightsOverviewController : Controller
 
     private readonly IMapper _mapper;
 
-    public FlightsOverviewController(IMapper mapper, IService<Flight, int> flightService, ISeasonService seasonService,
+    public FlightsOverviewController(IMapper mapper, IFlightService flightService, ISeasonService seasonService,
         IMealChoiceService mealService, ITicketService ticketService, ILogger<FlightsOverviewController> logger)
     {
         _mapper = mapper;

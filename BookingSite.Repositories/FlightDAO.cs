@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookingSite.Repositories;
 
-public class FlightDAO : IDAO<Flight, int>
+public class FlightDAO : IFlightDAO
 {
     private readonly Context _dbContext;
 
@@ -88,6 +88,27 @@ public class FlightDAO : IDAO<Flight, int>
         {
             _dbContext.Flights.Update(entity);
             await _dbContext.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in UpdateAsync: {ex.Message}");
+            throw;
+        }
+    }
+
+    public async Task<IEnumerable<Flight>> FindByFromAndToAirportIdAsync(int fromId, int toId)
+    {
+        try
+        {
+            return await _dbContext.Flights.Include(f => f.Plane)
+                .Include(f => f.Route)
+                .Include(f => f.Route.ToAirport)
+                .Include(f => f.Route.FromAirport)
+                .Include(f => f.Route.RouteSegments)
+                .ThenInclude(rs => rs.Airport)
+                .Include(f => f.Tickets)
+                .Where(f => f.Route.FromAirportId == fromId && f.Route.ToAirportId == toId)
+                .ToListAsync();
         }
         catch (Exception ex)
         {

@@ -107,4 +107,22 @@ public class BookingDAO : IBookingDAO
             throw;
         }
     }
+
+    public async Task<IEnumerable<String>?> GetCityLattitudeLongitudeOfLastBookedTicketsAsync(string userId)
+    {
+        try
+        {
+            return await _dbContext.Bookings
+                .Where(b => b.UserId == userId)
+                .OrderBy(b => b.Id)
+                .Select(b => b.Tickets
+                    .Select(t => t.Flight.Route.ToAirport.City.LatLong).Distinct().ToList())
+                .LastOrDefaultAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in GetFirstBookingByUserIdAsync: {ex.Message}");
+            throw;
+        }
+    }
 }

@@ -13,23 +13,25 @@ using SendWithBrevo;
 public class EmailSender : IEmailSender
 {
     private readonly ILogger _logger;
+    private readonly BrevoApiConfig _brevoApiConfig;
 
     public EmailSender(IOptions<AuthMessageSenderOptions> optionsAccessor,
-        ILogger<EmailSender> logger)
+        ILogger<EmailSender> logger, IOptions<BrevoApiConfig> brevoApiConfig)
     {
         Options = optionsAccessor.Value;
         _logger = logger;
+        _brevoApiConfig = brevoApiConfig.Value;
     }
 
     public AuthMessageSenderOptions Options { get; } //Set with Secret Manager.
 
     public async Task SendEmailAsync(string toEmail, string subject, string message)
     {
-        if (string.IsNullOrEmpty("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"))
+        if (string.IsNullOrEmpty(_brevoApiConfig.ApiKey))
         {
             throw new Exception("Null SendGridKey");
         }
-        await Execute("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", subject, message, toEmail);
+        await Execute(_brevoApiConfig.ApiKey, subject, message, toEmail);
     }
 
     public async Task Execute(string apiKey, string subject, string message, string toEmail)

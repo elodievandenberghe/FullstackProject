@@ -4,43 +4,102 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Security.Claims;
+using BookingSite.Data;
+using BookingSite.Repositories.Interfaces;
+using BookingSite.Services.Interfaces;
 using BookingSite.ViewModels;
+using BookingSite.ViewModels.Interface;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 
 namespace BookingSite.Controllers;
 
 public class HotelController : Controller
 {
-    private static HttpClient client = new HttpClient();
-
-    public async  Task<IActionResult> Index()
+    private static HttpClient _client = new HttpClient();
+    private IBookingService _bookingService;
+    private readonly TripAdvisorApiKey _tripAdvisorApiKey;
+    
+    public HotelController(IBookingService bookingService, IOptions<TripAdvisorApiKey> tripAdvisorApiKey)
     {
-        await GetHotels(20088325);
-        return View();
+        if (_client.BaseAddress == null)
+        {
+            _client.BaseAddress = new Uri("https://api.content.tripadvisor.com/api/v1");
+        }
+        _bookingService = bookingService;
+        _tripAdvisorApiKey = tripAdvisorApiKey.Value;
     }
 
-    public async Task<IActionResult> GetHotels(int destId)
+    [Authorize]
+    public async Task<IActionResult> Index()
     {
-        List<HotelViewModel> hotels = new List<HotelViewModel>();
+        var value = await _bookingService.GetCityLattitudeLongitudeOfLastBookedTicketsAsync(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        List<HotelViewModel> data = new List<HotelViewModel>();
+        Console.WriteLine(_client.BaseAddress+_tripAdvisorApiKey.ApiKey);
+        
+        foreach (var item in value)
+        {
+           var response = await MakeApiRequest<HotelViewModel>($"location/search?key={_tripAdvisorApiKey.ApiKey}&searchQuery=hotel&latLong={item}&language=en");
+           data.AddRange(response.Data.Select(d => d).Take(3).ToList());
+        }
+        foreach (var item in data)
+        {
+            var imageurl = MakeApiRequest<HotelImageViewModel>(
+                $"location/{item.LocationId}/photos?language=en&key={_tripAdvisorApiKey.ApiKey}");
+            
 
+            var weburl = ViewInfo(
+                $"location/{item.LocationId}/details?&key={_tripAdvisorApiKey.ApiKey}");
+                
+            await Task.WhenAll(imageurl, weburl);
+            item.ImageUrl = imageurl?.Result.Data?[0]?.Images?.Original?.Url ?? null;
+            item.WebUrl = weburl.Result.WebUrl ?? null; 
+        }
+
+        return View(data);
+    }
+    
+
+    public async Task<RootObject<T>> MakeApiRequest<T>(string endpoint)
+    {
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
-            RequestUri = new Uri($"https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels?dest_id={destId}&search_type=CITY&arrival_date={DateTime.Today}&departure_date={DateTime.Today.AddDays(1)}&adults=1&room_qty=1&page_number=1&units=metric&temperature_unit=c&languagecode=en-us&currency_code=AED&location=US"),
-            Headers =
-            {
-                { "x-rapidapi-host", "booking-com15.p.rapidapi.com" },
-                { "x-rapidapi-key", "95516cd78cmshacb5723ea0358dcp1421cbjsn570caeee9830" }
-            }
+            RequestUri = new Uri($"{_client.BaseAddress}/{endpoint}"),
+            Headers = { { "accept", "application/json" } }
         };
 
-        using (var response = await client.SendAsync(request))
+        using (var response = await _client.SendAsync(request))
         {
             response.EnsureSuccessStatusCode();
             var body = await response.Content.ReadAsStringAsync();
-            var result = JsonConvert.DeserializeObject<List<HotelViewModel>>(body);
-            Console.WriteLine(body);
+            
+            var settings = new JsonSerializerSettings{ TypeNameHandling = TypeNameHandling.Auto };
+            var result = JsonConvert.DeserializeObject<RootObject<T>>(body, settings);
+            return result;
         }
+    } 
 
-        return View(hotels);
+    public async Task<HotelInfoViewModel> ViewInfo(string endpoint)
+    {
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Get,
+            RequestUri = new Uri($"{_client.BaseAddress}/{endpoint}"),
+            Headers = { { "accept", "application/json" } }
+        };
+
+        using (var response = await _client.SendAsync(request))
+        {
+            response.EnsureSuccessStatusCode();
+            var body = await response.Content.ReadAsStringAsync();
+            
+            var settings = new JsonSerializerSettings{ TypeNameHandling = TypeNameHandling.Auto };
+            var result = JsonConvert.DeserializeObject<HotelInfoViewModel>(body, settings);
+            return result;
+        }
     }
+
 }

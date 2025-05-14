@@ -1,0 +1,10 @@
+@model List<BookingSite.ViewModels.HotelViewModel>
+
+    @foreach (var hotel in Model)
+    {
+        <p>@hotel.Name</p>
+        <p>@hotel.Address.AddressString</p>
+        <img src="@hotel.ImageUrl" alt="Hotel image">
+        <a href="@hotel.WebUrl">Book your room!</a>
+        <p>--------------------------------------------<br/></p>
+    }
