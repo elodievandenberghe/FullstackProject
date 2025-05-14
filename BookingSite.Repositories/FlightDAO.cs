@@ -107,7 +107,7 @@ public class FlightDAO : IFlightDAO
                 .Include(f => f.Route.RouteSegments)
                 .ThenInclude(rs => rs.Airport)
                 .Include(f => f.Tickets)
-                .Where(f => f.Route.ToAirportId == fromId && f.Route.FromAirportId == toId)
+                .Where(f => f.Route.FromAirportId == fromId && f.Route.ToAirportId == toId)
                 .ToListAsync();
         }
         catch (Exception ex)

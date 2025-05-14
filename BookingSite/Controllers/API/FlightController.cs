@@ -4,6 +4,7 @@ using BookingSite.Repositories.Interfaces;
 using BookingSite.Services.Interfaces;
 using BookingSite.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Route = BookingSite.Domains.Models.Route;
 
 namespace BookingSite.Controllers.API;
@@ -12,27 +13,27 @@ namespace BookingSite.Controllers.API;
 public class FlightController : ControllerBase
 {
     private IRouteService _routeService;
-  //  private IFli _routeService;
+     private IFlightService _flightService;
     private readonly IMapper _mapper;
 
-    public FlightController(IMapper mapper, IRouteService routeService)
+    public FlightController(IMapper mapper, IRouteService routeService, IFlightService flightService)
     {
         _mapper = mapper;
         _routeService = routeService;
+        _flightService = flightService;
     }
 
     [HttpGet("{fromAirportId}&{toAirportId}")]
     public async Task<ActionResult<RouteViewModel>> GetAll(int fromAirportId, int toAirportId)
     {
         try
-        {
-            var data = await _routeService.GetByFromAirportIdToAirportId(fromAirportId, toAirportId);
-          //  var flights = await 
-            if (data == null)
+        { 
+            var flights = await _flightService.FindByFromAndToAirportIdAsync(fromAirportId, toAirportId);
+            if (flights.IsNullOrEmpty())
             {
                 return NotFound();
             }
-            return Ok(_mapper.Map<List<RouteViewModel>>(data));
+            return Ok(_mapper.Map<List<FlightViewModel>>(flights));
         }
         catch (Exception ex)
         {
