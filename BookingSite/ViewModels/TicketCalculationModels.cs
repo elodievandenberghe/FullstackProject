@@ -6,6 +6,7 @@ namespace BookingSite.ViewModels
     {
         public int FlightId { get; set; }
         public List<TicketSelectionData> Tickets { get; set; } = new List<TicketSelectionData>();
+        public bool AddAction { get; set; }
     }
 
     public class TicketCalculationResponse
