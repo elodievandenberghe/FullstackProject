@@ -10,7 +10,7 @@ namespace BookingSite.Domains.Models
     {
         public int Id { get; set; }
         public string UserId { get; set; }
-
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
         public virtual AspNetUser User { get; set; }
         public virtual ICollection<Ticket> Tickets { get; } = new List<Ticket>();
     }

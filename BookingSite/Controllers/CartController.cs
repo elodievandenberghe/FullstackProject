@@ -82,7 +82,8 @@ public class CartController : Controller
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 var booking = new Booking
                 {
-                    UserId = userId
+                    UserId = userId,
+                    CreatedDate = DateTime.UtcNow,
                 };
 
                 await _bookingService.AddAsync(booking);

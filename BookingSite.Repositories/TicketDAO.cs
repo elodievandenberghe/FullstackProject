@@ -54,6 +54,10 @@ public class TicketDAO : ITicketDAO
         {
             return await _dbContext.Tickets
                 .Include(t => t.Flight)
+                    .ThenInclude(f => f.Route)
+                        .ThenInclude(r => r.FromAirport)
+                .Include(t => t.Flight.Route)
+                    .ThenInclude(r => r.ToAirport)
                 .Include(t => t.Meal)
                 .Include(t => t.Booking)
                 .FirstOrDefaultAsync(t => t.Id == id);
