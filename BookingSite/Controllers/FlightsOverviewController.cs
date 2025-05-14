@@ -146,14 +146,14 @@ public class FlightsOverviewController : Controller
         var flight = await _flightService.FindByIdAsync(id);
         if (flight == null)
         {
-            return NotFound("Flight not found");
+            return NotFound();
         }
 
         // Check booking window constraints
         DateTime flightDate = flight.Date.ToDateTime(TimeOnly.MinValue);
         if (flightDate < MIN_DATE || flightDate > MAX_DATE)
         {
-            return NotFound("Booking is only available from 6 months before until 3 days before departure");
+            return NotFound();
         }
 
         // Get available seats
@@ -162,7 +162,7 @@ public class FlightsOverviewController : Controller
         availableSeats -= cart.Carts.Where(c => c.FlightId == flight.Id).Count();
         if (availableSeats <= 0)
         {
-            return NotFound("No seats available for this flight");
+            return NotFound();
         }
 
 
@@ -170,7 +170,7 @@ public class FlightsOverviewController : Controller
         var ticketOverviewVmViewModel = await GetTicketOverviewViewModelAsync(id);
         if (ticketOverviewVmViewModel == null)
         {
-            return NotFound("Flight not found");
+            return NotFound();
         }
 
         return View(ticketOverviewVmViewModel);
@@ -184,7 +184,7 @@ public class FlightsOverviewController : Controller
 
         var flight = await _flightService.FindByIdAsync(request.FlightId);
         if (flight == null)
-            return NotFound("Flight not found");
+            return NotFound();
 
         try
         {
@@ -217,7 +217,7 @@ public class FlightsOverviewController : Controller
         }
         catch (NoPlaneAssignedException)
         {
-            return NotFound("No plane assigned to this flight");
+            return NotFound();
         }
         catch (Exception ex)
         {
@@ -389,7 +389,7 @@ public class FlightsOverviewController : Controller
             var ticketOverviewVmViewModel = await GetTicketOverviewViewModelAsync(model.FlightId);
             if (ticketOverviewVmViewModel == null)
             {
-                return NotFound("Flight not found");
+                return NotFound();
             }
 
             return View("Buy", ticketOverviewVmViewModel);
@@ -398,13 +398,13 @@ public class FlightsOverviewController : Controller
         var flight = await _flightService.FindByIdAsync(model.FlightId);
         if (flight == null)
         {
-            return NotFound("Flight not found");
+            return NotFound();
         }
 
         DateTime flightDate = flight.Date.ToDateTime(TimeOnly.MinValue);
         if (flightDate < MIN_DATE || flightDate > MAX_DATE)
         {
-            return NotFound("Booking is only available from 6 months before until 3 days before departure");
+            return NotFound();
         }
         // Convert tickets from the model to TicketSelectionData for price calculation
         var ticketSelectionData = model.Tickets.Select(t => new TicketSelectionData

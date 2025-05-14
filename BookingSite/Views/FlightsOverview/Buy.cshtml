@@ -1,5 +1,9 @@
 @using BookingSite.ViewModels
 @model BookingSite.ViewModels.TicketOverviewViewModel
+@{
+    ViewData["Title"] = "Flight Details";
+	ViewData["TitleIcon"] = "ticket-perforated";
+}
 
 <div class="container mt-4">
     <div class="card shadow">
@@ -126,7 +130,14 @@
                 isProcessing = true;
                 // Create overlay if it doesn't exist
                 if ($('#processing-overlay').length === 0) {
-                    $('body').append('<div id="processing-overlay" class="position-fixed top-0 start-0 w-100 h-100" style="background-color: rgba(0,0,0,0.5); z-index: 9999;"><div class="position-absolute top-50 start-50 translate-middle bg-white p-4 rounded shadow"><div class="spinner-border text-primary me-2" role="status"></div><span class="h5">Processing your request...</span></div></div>');
+                    $('body').append(`
+                        <div id="processing-overlay" class="position-fixed top-0 start-0 w-100 h-100"
+                             style="background-color: transparent; z-index: 9999; pointer-events: all;">
+                          <div class="position-absolute top-50 start-50 translate-middle">
+                            <div class="spinner-border text-primary" role="status"></div>
+                          </div>
+                        </div>
+                    `);
                 } else {
                     $('#processing-overlay').show();
                 }
@@ -337,7 +348,7 @@
             }
 
             // Event listeners for class and meal changes
-            $(document).on("change", ".seat-class-select @*, .meal-select (reanable if meal effects price*@", function() {
+            $(document).on("change", ".seat-class-select , .meal-select", function() {
                 if (!isProcessing) {
 
                     // Renumber the passengers
@@ -387,6 +398,7 @@
                     contentType: "application/json",
                     success: function(response) {
                         updateTicketDisplay(response);
+                        unblockUI()
                     },
                     error: function(error) {
                         console.error("Error calculating tickets:", error);

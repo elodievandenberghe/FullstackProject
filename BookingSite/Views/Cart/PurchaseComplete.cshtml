@@ -1,8 +1,35 @@
 @{
-    ViewData["Title"] = "Thank you for your purchase!";
+    ViewData["Title"] = "Checkout Complete";
+    ViewData["TitleIcon"] = "check-circle";
 }
 
-<p>
-    Thank you for your purchase. You should be receiving a confirmation mail soon. <br/>
-    Be sure to check your spam folder!
-</p>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                    </div>
+                    <h2 class="card-title">Thank You for Your Purchase!</h2>
+                    <p class="card-text">Your checkout has been successfully completed.</p>
+
+                    <hr class="my-4">
+
+                    <div class="row mt-4">
+                        <div class="col-md-6 mb-3">
+                            <a asp-controller="FlightsOverview" asp-action="Index" class="btn btn-primary btn-lg w-100">
+                                <i class="bi bi-building me-2"></i>View Destination Hotels
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a asp-controller="Hotel" asp-action="Index" class="btn btn-outline-secondary btn-lg w-100">
+                                <i class="bi bi-house me-2"></i>Return to Home
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

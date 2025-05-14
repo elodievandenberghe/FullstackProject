@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using BookingSite.Models;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.Extensions.Localization;
+using BookingSite.ViewModels;
 
 namespace BookingSite.Controllers;
 
@@ -24,7 +24,7 @@ public class HomeController : Controller
         ViewData["Message"] = _localizer["Message"];
         return View();
     }
-
+    
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
@@ -45,6 +45,22 @@ public class HomeController : Controller
             }
         );
         return LocalRedirect(returnUrl);
+    }
+
+    // Add this to your HomeController
+    public IActionResult TestNotFound()
+    {
+        return NotFound();
+    }
+
+    public IActionResult TestForbidden()
+    {
+        return Forbid();
+    }
+
+    public IActionResult TestError()
+    {
+        throw new Exception("This is a test exception");
     }
 }
 

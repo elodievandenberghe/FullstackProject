@@ -2,18 +2,12 @@
 
 @{
     ViewData["Title"] = "Booking Details";
+    ViewData["TitleIcon"] = "ticket-detailed";
+    var action = $"<a href='{Url.Action("Index")}' class='btn btn-outline-primary'><i class='bi bi-arrow-left'></i> Back to My Bookings</a>";
+    ViewData["PrimaryAction"] = action;
 }
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="text-primary">
-            <i class="bi bi-ticket-detailed"></i> Booking Details
-        </h1>
-        <a asp-action="Index" class="btn btn-outline-primary">
-            <i class="bi bi-arrow-left"></i> Back to My Bookings
-        </a>
-    </div>
-    
+<div class="container mt-4">  
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
