@@ -102,12 +102,7 @@ public class CartController : Controller
 
                     await _ticketService.AddAsync(ticket);
                 }
-
-                await _emailSender.SendEmailAsync(
-                    User.FindFirstValue(ClaimTypes.Email),
-                    "Your booking has been completed!",
-                    $"Thank you for booking with us. Your booking reference number is {booking.Id}");
-
+                
                 var summaryStr = "";
                 foreach (var ticket in booking.Tickets)
                 {
