@@ -12,14 +12,12 @@ namespace BookingSite.Controllers.API;
 [Route("api/vluchten")]
 public class FlightController : ControllerBase
 {
-    private IRouteService _routeService;
      private IFlightService _flightService;
     private readonly IMapper _mapper;
 
-    public FlightController(IMapper mapper, IRouteService routeService, IFlightService flightService)
+    public FlightController(IMapper mapper, IFlightService flightService)
     {
         _mapper = mapper;
-        _routeService = routeService;
         _flightService = flightService;
     }
 
