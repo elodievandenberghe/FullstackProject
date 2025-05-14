@@ -18,6 +18,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace BookingSite.Controllers;
 
+[ApiExplorerSettings(IgnoreApi = true)]
 public class HotelController : Controller
 {
     private static HttpClient _client = new HttpClient();

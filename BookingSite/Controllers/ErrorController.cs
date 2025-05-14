@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BookingSite.Controllers
 {
     [AllowAnonymous]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public class ErrorController : Controller
     {
         [Route("Error/{statusCode}")]
