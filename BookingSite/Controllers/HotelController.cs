@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Security.Claims;
 using BookingSite.Data;
+using BookingSite.Domains.Models;
 using BookingSite.Repositories.Interfaces;
 using BookingSite.Services.Interfaces;
 using BookingSite.ViewModels;
@@ -13,6 +14,7 @@ using BookingSite.ViewModels.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 namespace BookingSite.Controllers;
 
@@ -21,8 +23,9 @@ public class HotelController : Controller
     private static HttpClient _client = new HttpClient();
     private IBookingService _bookingService;
     private readonly TripAdvisorApiKey _tripAdvisorApiKey;
+    private readonly IService<City, int> _cityService;
     
-    public HotelController(IBookingService bookingService, IOptions<TripAdvisorApiKey> tripAdvisorApiKey)
+    public HotelController(IBookingService bookingService, IOptions<TripAdvisorApiKey> tripAdvisorApiKey, IService<City, int> cityService)
     {
         if (_client.BaseAddress == null)
         {
@@ -30,6 +33,7 @@ public class HotelController : Controller
         }
         _bookingService = bookingService;
         _tripAdvisorApiKey = tripAdvisorApiKey.Value;
+        _cityService = cityService;
     }
 
     [Authorize]
@@ -39,6 +43,12 @@ public class HotelController : Controller
         {
             var value = await _bookingService.GetCityLattitudeLongitudeOfLastBookedTicketsAsync(
                 User.FindFirstValue(ClaimTypes.NameIdentifier));
+            
+            if (value.IsNullOrEmpty())
+            {
+                return View("NoBookings");
+            }
+            
             List<HotelViewModel> data = new List<HotelViewModel>();
 
             foreach (var item in value)
@@ -48,14 +58,6 @@ public class HotelController : Controller
                 data.AddRange(response.Data.Select(d => d).ToList());
             }
 
-            /*  var image = data.Select(d =>  MakeApiRequest<HotelImageViewModel>($"location/{d.LocationId}/photos?language=en&key={_tripAdvisorApiKey.ApiKey}")).ToList();
-              var url = data.Select(d =>  ViewInfo($"location/{d.LocationId}/details?&key={_tripAdvisorApiKey.ApiKey}")).ToList();
-
-              List<Task> tasks = new List<Task>();
-              tasks.AddRange(image);
-              tasks.AddRange(url);
-              await Task.WhenAll(tasks);*/
-            
             foreach (var item in data)
             {
                 var imageurl = MakeApiRequest<HotelImageViewModel>(
@@ -78,7 +80,52 @@ public class HotelController : Controller
         }
     }
     
+    [Authorize]
+    [Route("Hotel/{cityId:int}")]
+    public async Task<IActionResult> Index(int? cityId)
+    {
+        try
+        {
+            IEnumerable<string> value;
 
+            if (cityId == null)
+            {
+                return View("Error");
+            }
+            var city = await _cityService.FindByIdAsync(cityId.Value);
+            value = new List<string> { city?.LatLong ?? "" };
+
+            var data = new List<HotelViewModel>();
+            foreach (var item in value)
+            {
+                var response = await MakeApiRequest<HotelViewModel>(
+                    $"location/search?key={_tripAdvisorApiKey.ApiKey}&searchQuery=hotel&latLong={item}&language=en");
+                data.AddRange(response.Data.Select(d => d).ToList());
+            }
+
+            foreach (var item in data)
+            {
+                var imageurl = MakeApiRequest<HotelImageViewModel>(
+                    $"location/{item.LocationId}/photos?language=en&key={_tripAdvisorApiKey.ApiKey}");
+
+
+                var weburl = ViewInfo(
+                    $"location/{item.LocationId}/details?&key={_tripAdvisorApiKey.ApiKey}");
+
+                await Task.WhenAll(imageurl, weburl);
+                item.ImageUrl = imageurl?.Result.Data?[0]?.Images?.Original?.Url ?? null;
+                item.WebUrl = weburl.Result.WebUrl ?? null;
+            }
+
+            return View(data);
+        }
+        catch (Exception ex)
+        {
+            return View("Error");
+        }
+    }
+    
+    
     public async Task<RootObject<T>> MakeApiRequest<T>(string endpoint)
     {
         var request = new HttpRequestMessage

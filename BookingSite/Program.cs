@@ -66,6 +66,10 @@ builder.Services.AddTransient<IFlightService, FlightService>();
 builder.Services.AddTransient<IDAO<Flight, int>, FlightDAO>();
 builder.Services.AddTransient<IService<Flight, int>, FlightService>();
 
+builder.Services.AddTransient<IDAO<City, int>, CityDAO>();
+builder.Services.AddTransient<IService<City, int>, CityService>();
+
+
 builder.Services.AddTransient<ITicketDAO, TicketDAO>();
 builder.Services.AddTransient<ITicketService, TicketService>();
 
