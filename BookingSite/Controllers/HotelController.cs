@@ -35,30 +35,49 @@ public class HotelController : Controller
     [Authorize]
     public async Task<IActionResult> Index()
     {
-        var value = await _bookingService.GetCityLattitudeLongitudeOfLastBookedTicketsAsync(User.FindFirstValue(ClaimTypes.NameIdentifier));
-        List<HotelViewModel> data = new List<HotelViewModel>();
-        Console.WriteLine(_client.BaseAddress+_tripAdvisorApiKey.ApiKey);
-        
-        foreach (var item in value)
+        try
         {
-           var response = await MakeApiRequest<HotelViewModel>($"location/search?key={_tripAdvisorApiKey.ApiKey}&searchQuery=hotel&latLong={item}&language=en");
-           data.AddRange(response.Data.Select(d => d).Take(3).ToList());
+            var value = await _bookingService.GetCityLattitudeLongitudeOfLastBookedTicketsAsync(
+                User.FindFirstValue(ClaimTypes.NameIdentifier));
+            List<HotelViewModel> data = new List<HotelViewModel>();
+
+            foreach (var item in value)
+            {
+                var response = await MakeApiRequest<HotelViewModel>(
+                    $"location/search?key={_tripAdvisorApiKey.ApiKey}&searchQuery=hotel&latLong={item}&language=en");
+                data.AddRange(response.Data.Select(d => d).Take(3).ToList());
+            }
+
+            /*  var image = data.Select(d =>  MakeApiRequest<HotelImageViewModel>($"location/{d.LocationId}/photos?language=en&key={_tripAdvisorApiKey.ApiKey}")).ToList();
+              var url = data.Select(d =>  ViewInfo($"location/{d.LocationId}/details?&key={_tripAdvisorApiKey.ApiKey}")).ToList();
+
+              List<Task> tasks = new List<Task>();
+              tasks.AddRange(image);
+              tasks.AddRange(url);
+              await Task.WhenAll(tasks);*/
+
+
+
+            foreach (var item in data)
+            {
+                var imageurl = MakeApiRequest<HotelImageViewModel>(
+                    $"location/{item.LocationId}/photos?language=en&key={_tripAdvisorApiKey.ApiKey}");
+
+
+                var weburl = ViewInfo(
+                    $"location/{item.LocationId}/details?&key={_tripAdvisorApiKey.ApiKey}");
+
+                await Task.WhenAll(imageurl, weburl);
+                item.ImageUrl = imageurl?.Result.Data?[0]?.Images?.Original?.Url ?? null;
+                item.WebUrl = weburl.Result.WebUrl ?? null;
+            }
+
+            return View(data);
         }
-        foreach (var item in data)
+        catch (Exception ex)
         {
-            var imageurl = MakeApiRequest<HotelImageViewModel>(
-                $"location/{item.LocationId}/photos?language=en&key={_tripAdvisorApiKey.ApiKey}");
-            
-
-            var weburl = ViewInfo(
-                $"location/{item.LocationId}/details?&key={_tripAdvisorApiKey.ApiKey}");
-                
-            await Task.WhenAll(imageurl, weburl);
-            item.ImageUrl = imageurl?.Result.Data?[0]?.Images?.Original?.Url ?? null;
-            item.WebUrl = weburl.Result.WebUrl ?? null; 
+            return View("Error");
         }
-
-        return View(data);
     }
     
 
