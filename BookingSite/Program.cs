@@ -60,8 +60,8 @@ builder.Services.AddTransient<IRouteService, RouteService>();
 builder.Services.AddTransient<IMealChoiceDAO, MealChoicesDAO>();
 builder.Services.AddTransient<IMealChoiceService, MealchoicesService>();
 
-builder.Services.AddTransient<IDAO<Flight, int>, FlightDAO>();
-builder.Services.AddTransient<IService<Flight, int>, FlightService>();
+builder.Services.AddTransient<IFlightDAO, FlightDAO>();
+builder.Services.AddTransient<IFlightService, FlightService>();
 
 builder.Services.AddTransient<IDAO<Flight, int>, FlightDAO>();
 builder.Services.AddTransient<IService<Flight, int>, FlightService>();

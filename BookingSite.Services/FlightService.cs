@@ -4,11 +4,11 @@ using BookingSite.Services.Interfaces;
 
 namespace BookingSite.Services;
 
-public class FlightService : IService<Flight, int>
+public class FlightService : IFlightService
 {
-    private IDAO<Flight, int> _flightDAO;
+    private IFlightDAO _flightDAO;
 
-    public FlightService(IDAO<Flight, int> flightDAO) // DI
+    public FlightService(IFlightDAO flightDAO) // DI
     {
         _flightDAO = flightDAO;
     }
@@ -36,5 +36,10 @@ public class FlightService : IService<Flight, int>
     public async Task UpdateAsync(Flight entity)
     {
         await _flightDAO.UpdateAsync(entity);
+    }
+
+    public async Task<IEnumerable<Flight>> FindByFromAndToAirportIdAsync(int fromId, int toId)
+    {
+        return await _flightDAO.FindByFromAndToAirportIdAsync(fromId, toId);
     }
 }

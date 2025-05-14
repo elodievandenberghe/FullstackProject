@@ -9,12 +9,13 @@ using Route = BookingSite.Domains.Models.Route;
 namespace BookingSite.Controllers.API;
 
 [Route("api/vluchten")]
-public class RouteController : ControllerBase
+public class FlightController : ControllerBase
 {
     private IRouteService _routeService;
+  //  private IFli _routeService;
     private readonly IMapper _mapper;
 
-    public RouteController(IMapper mapper, IRouteService routeService)
+    public FlightController(IMapper mapper, IRouteService routeService)
     {
         _mapper = mapper;
         _routeService = routeService;
@@ -26,6 +27,7 @@ public class RouteController : ControllerBase
         try
         {
             var data = await _routeService.GetByFromAirportIdToAirportId(fromAirportId, toAirportId);
+          //  var flights = await 
             if (data == null)
             {
                 return NotFound();
