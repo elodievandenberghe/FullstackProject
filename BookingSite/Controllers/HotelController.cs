@@ -45,17 +45,8 @@ public class HotelController : Controller
             {
                 var response = await MakeApiRequest<HotelViewModel>(
                     $"location/search?key={_tripAdvisorApiKey.ApiKey}&searchQuery=hotel&latLong={item}&language=en");
-                data.AddRange(response.Data.Select(d => d).Take(3).ToList());
+                data.AddRange(response.Data.Select(d => d).ToList());
             }
-
-            /*  var image = data.Select(d =>  MakeApiRequest<HotelImageViewModel>($"location/{d.LocationId}/photos?language=en&key={_tripAdvisorApiKey.ApiKey}")).ToList();
-              var url = data.Select(d =>  ViewInfo($"location/{d.LocationId}/details?&key={_tripAdvisorApiKey.ApiKey}")).ToList();
-
-              List<Task> tasks = new List<Task>();
-              tasks.AddRange(image);
-              tasks.AddRange(url);
-              await Task.WhenAll(tasks);*/
-
 
 
             foreach (var item in data)
