@@ -48,7 +48,14 @@ public class HotelController : Controller
                 data.AddRange(response.Data.Select(d => d).ToList());
             }
 
+            /*  var image = data.Select(d =>  MakeApiRequest<HotelImageViewModel>($"location/{d.LocationId}/photos?language=en&key={_tripAdvisorApiKey.ApiKey}")).ToList();
+              var url = data.Select(d =>  ViewInfo($"location/{d.LocationId}/details?&key={_tripAdvisorApiKey.ApiKey}")).ToList();
 
+              List<Task> tasks = new List<Task>();
+              tasks.AddRange(image);
+              tasks.AddRange(url);
+              await Task.WhenAll(tasks);*/
+            
             foreach (var item in data)
             {
                 var imageurl = MakeApiRequest<HotelImageViewModel>(

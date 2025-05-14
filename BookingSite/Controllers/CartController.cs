@@ -108,6 +108,36 @@ public class CartController : Controller
                     "Your booking has been completed!",
                     $"Thank you for booking with us. Your booking reference number is {booking.Id}");
 
+                var summaryStr = "";
+                foreach (var ticket in booking.Tickets)
+                {
+                    summaryStr += $"  Route: {ticket.Flight.Route.FromAirport.Name} to {ticket.Flight.Route.ToAirport.Name}\n";
+                    summaryStr += $"  Flight Date: {ticket.Flight.Date:dd MMM yyyy}\n";
+                    summaryStr += $"  Seat Class: {ticket.SeatClass}\n";
+                    summaryStr += $"  Seat Number: {ticket.SeatNumber}\n";
+                    summaryStr += $"  Price: €{ticket.Price:F2}\n\n";
+                }
+
+                var customerName = User.FindFirstValue(ClaimTypes.Name);
+                var customerSurname = User.FindFirstValue(ClaimTypes.Surname);
+                var customerEmail = User.FindFirstValue(ClaimTypes.Email);
+
+                var emailBody =
+                    $"Dear {customerName} {customerSurname},\n\n" +
+                    $"Thank you for your purchase through our platform. Below is a summary of your reservation:\n\n" +
+                    $"{summaryStr}" +
+                    $"Booking Reference: {booking.Id}\n" +
+                    $"Booking Date: {DateTime.UtcNow:dd MMM yyyy}\n" +
+                    $"Cancellation Policy:\n" +
+                    $"- You may cancel your flight up to 7 days before departure without any charges.\n\n" +
+
+                    $"Best regards,\n";
+
+                await _emailSender.SendEmailAsync(
+                    customerEmail,
+                    "Flight Booking Confirmation",
+                    emailBody
+                );
                 HttpContext.Session.Remove("ShoppingCart");
             }
 
