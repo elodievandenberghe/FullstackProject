@@ -55,6 +55,21 @@ public class CartController : Controller
         return View(await GetList());
     }
 
+
+    [Authorize]
+    public IActionResult Remove(int index)
+    {
+        CartModel? cartList = HttpContext.Session.GetObject<CartModel>("ShoppingCart");
+
+        if (cartList != null && index >= 0 && index < cartList.Carts.Count)
+        {
+            cartList.Carts.RemoveAt(index);
+            HttpContext.Session.SetObject("ShoppingCart", cartList);
+        }
+
+        return RedirectToAction("Index");
+    }
+
     [Authorize]
     public async Task<IActionResult> PurchaseComplete()
     {

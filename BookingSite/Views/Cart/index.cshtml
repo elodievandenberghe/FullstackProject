@@ -26,19 +26,21 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in Model.Carts)
+                        @foreach(var item in Model.Carts.Select((value, i) => new { v = value, Index = i }))
                         {
                             <tr>
-                                <td>@Html.DisplayFor(modelItem => item.FromAirport)</td>
-                                <td>@Html.DisplayFor(modelItem => item.ToAirport)</td>
-                                <td>@Html.DisplayFor(modelItem => item.Date)</td>
-                                <td>€ @Html.DisplayFor(modelItem => item.Price)</td>
-                                <td>@Html.DisplayFor(modelItem => item.SeatClassName)</td>
-                                <td>@Html.DisplayFor(modelItem => item.MealDescription)</td>
+                                <td>@Html.DisplayFor(modelItem => item.v.FromAirport)</td>
+                                <td>@Html.DisplayFor(modelItem => item.v.ToAirport)</td>
+                                <td>@Html.DisplayFor(modelItem => item.v.Date)</td>
+                                <td>€ @Html.DisplayFor(modelItem => item.v.Price)</td>
+                                <td>@Html.DisplayFor(modelItem => item.v.SeatClassName)</td>
+                                <td>@Html.DisplayFor(modelItem => item.v.MealDescription)</td>
                                 <td>
-                                    <button class="btn btn-sm btn-danger">
+                                    <a asp-controller="Cart" asp-action="Remove"
+                                       asp-route-index="@item.Index"
+                                       class="btn btn-sm btn-danger">
                                         <i class="bi bi-trash"></i>
-                                    </button>
+                                    </a>
                                 </td>
                             </tr>
                         }
